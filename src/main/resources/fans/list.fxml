@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import java.net.URL?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="cn.huwhy.weibo.robot.controller.FansController"
+            prefHeight="400.0" prefWidth="600.0">
+  <top>
+    <FlowPane hgap="5">
+      <padding>
+        <Insets bottom="5" left="5" right="5" top="5" />
+      </padding>
+      <Button text="刷新" />
+      <ChoiceBox fx:id="chbType" prefHeight="23.0" prefWidth="167.0" onAction="#chbTypeChange"/>
+    </FlowPane>
+  </top>
+  <center>
+    <TableView fx:id="tableView" onMouseClicked="#tableViewOnClick">
+      <columns>
+      </columns>
+    </TableView>
+  </center>
+  <bottom>
+    <FlowPane hgap="5">
+      <padding>
+        <Insets bottom="5" left="5" right="5" top="5" />
+      </padding>
+      <Label fx:id="lbWordNum" text="总记录数" />
+      <Button fx:id="pagePre" text="上一页" />
+      <Button fx:id="pageCur" text="1" />
+      <Button fx:id="pageNext" text="下一页" />
+    </FlowPane>
+  </bottom>
+  <stylesheets>
+    <URL value="@../main.css" />
+  </stylesheets>
+</BorderPane>

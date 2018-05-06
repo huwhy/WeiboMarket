@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.huwhy.weibo.robot.dao.MemberConfigDao">
+
+  <sql id="COLUMNS">
+    member_id,`content`
+  </sql>
+
+  <insert id="save">
+    insert into member_config(
+    <include refid="COLUMNS"/>
+    ) VALUES (
+    #{memberId},#{content}
+    ) on duplicate key update `content`=VALUES(`content`)
+  </insert>
+  
+  <select id="get" resultType="String" parameterType="Integer">
+    select content from member_config where `member_id`=#{id}
+    limit 1
+  </select>
+
+</mapper>

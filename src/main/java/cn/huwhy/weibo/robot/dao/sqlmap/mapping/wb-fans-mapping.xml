@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.huwhy.weibo.robot.dao.WbFansDao">
+
+  <sql id="COLUMNS">
+    id,wb_id,`type`,`good_num`,`bad_num`
+  </sql>
+
+  <insert id="save">
+    insert into wb_fans(
+    <include refid="COLUMNS"/>
+    ) VALUES (
+    #{id},#{wbId},#{type.value},#{goodNum},#{badNum}
+    ) on duplicate key update `type`=VALUES(`type`),
+    good_num=good_num+VALUES(good_num),bad_num=VALUES(bad_num)+bad_num
+  </insert>
+  
+  <insert id="saves">
+    insert into wb_fans(
+    <include refid="COLUMNS"/>
+    ) VALUES
+    <foreach collection="list" item="item" index="index"
+             separator=",">
+      (
+      #{item.id},#{item.wbId},#{item.type.value},#{item.goodNum},#{item.badNum}
+      )
+    </foreach>
+    on duplicate key update `type`=VALUES(`type`),
+    good_num=good_num+VALUES(good_num),bad_num=VALUES(bad_num)+bad_num
+  </insert>
+  
+  <select id="get" resultType="WbFans" parameterType="Long">
+    select <include refid="COLUMNS" /> from wb_fans where `id`=#{id}
+    limit 1
+  </select>
+  
+  <select id="findFansPaging" resultType="MyFans">
+    select b.id,b.nick,b.home,b.head_img, a.`type` from wb_fans a join wb_member b on a.wb_id=b.id
+    <where>
+      <if test="type != null">
+        and a.`type` = #{type.value}
+      </if>
+      <if test="memberId > 0">
+        and a.id = #{memberId}
+      </if>
+    </where>
+  </select>
+
+</mapper>

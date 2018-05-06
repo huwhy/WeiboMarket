@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.huwhy.weibo.robot.dao.TaskDao">
+  
+  <sql id="COLUMNS">
+    id,member_id,`name`,`start_time`,`end_time`,`status`,`summary`
+  </sql>
+  
+  <insert id="save" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    insert into task (
+    <include refid="COLUMNS"/>
+    ) VALUES (
+    #{id},#{memberId},#{name},#{startTime},#{endTime},#{status.value},#{summary}
+    ) on duplicate key update `end_time`=VALUES(`end_time`),
+    `status`=VALUES(`status`),summary=VALUES(summary)
+  </insert>
+  
+  <select id="get" resultType="Task" parameterType="Long">
+    select
+    <include refid="COLUMNS"/>
+    from task where `id`=#{id}
+    limit 1
+  </select>
+  
+  <select id="findPaging" resultType="Task">
+    select <include refid="COLUMNS" /> from task
+    <where>
+      <if test="memberId > 0">
+        and member_id = #{memberId}
+      </if>
+      <if test="status != null">
+        and `status` = #{status.value}
+      </if>
+    </where>
+  </select>
+
+</mapper>

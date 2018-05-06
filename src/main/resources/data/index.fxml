@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="660.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.huwhy.weibo.robot.controller.DataController">
+  <top>
+    <GridPane alignment="CENTER" hgap="5" prefHeight="200.0" prefWidth="200.0" vgap="5">
+      <padding>
+        <Insets bottom="5" left="5" right="5" top="5" />
+      </padding>
+      <Text fx:id="txTitle" text="我的粉丝统计" textAlignment="CENTER" wrappingWidth="224.0" GridPane.columnIndex="0" GridPane.columnSpan="3" GridPane.rowIndex="0">
+        <font>
+          <Font size="24.0" />
+        </font>
+      </Text>
+  
+      <Label text="总   数:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+      <Text fx:id="txTotal" wrappingWidth="100" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+  
+      <Label text="铁粉数:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+      <Text fx:id="txRed" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+  
+      <Label text="黑粉数:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+      <Text fx:id="txBlack" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="4" />
+  
+      <Label text="总评论数:" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+      <Text fx:id="txTotal2" GridPane.columnIndex="4" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+  
+      <Label text="铁粉评论数:" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+      <Text fx:id="txRed2" GridPane.columnIndex="4" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+  
+      <Label text="黑粉评论数:" GridPane.columnIndex="3" GridPane.rowIndex="4" />
+      <Text fx:id="txBlack2" GridPane.columnIndex="4" GridPane.columnSpan="2" GridPane.rowIndex="4" />
+      
+      <HBox alignment="BOTTOM_RIGHT" spacing="10" GridPane.columnIndex="2" GridPane.rowIndex="7">
+        <Button onAction="#refresh" text="刷新" />
+      </HBox>
+      <columnConstraints>
+        <ColumnConstraints />
+        <ColumnConstraints />
+        <ColumnConstraints />
+            <ColumnConstraints />
+            <ColumnConstraints />
+            <ColumnConstraints />
+      </columnConstraints>
+      <rowConstraints>
+        <RowConstraints />
+        <RowConstraints />
+        <RowConstraints />
+        <RowConstraints />
+        <RowConstraints />
+        <RowConstraints />
+        <RowConstraints />
+        <RowConstraints />
+      </rowConstraints>
+    </GridPane>
+  </top>
+  <center>
+    <FlowPane>
+      <PieChart fx:id="chartCount"/>
+      <PieChart fx:id="chartCount2" />
+    </FlowPane>
+  </center>
+  <bottom>
+  </bottom>
+  <stylesheets>
+    <URL value="@../main.css" />
+  </stylesheets>
+</BorderPane>

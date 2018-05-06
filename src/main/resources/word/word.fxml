@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.text.Text?>
+
+<GridPane alignment="CENTER" hgap="10" prefHeight="350.0" prefWidth="500.0"
+          fx:controller="cn.huwhy.weibo.robot.controller.WordController"
+          styleClass="root" vgap="10" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+  
+  <padding>
+    <Insets bottom="10" left="25" right="25" top="25" />
+  </padding>
+  
+  <Text fx:id="welcome" text="添加关键词" textAlignment="CENTER" wrappingWidth="267.0" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="0" />
+  
+  <Label text="    " GridPane.columnIndex="0" GridPane.rowIndex="2" />
+  <Label text="关键词:" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+  <TextField fx:id="txWord" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+  <Label text="    " GridPane.columnIndex="3" GridPane.rowIndex="2" />
+  
+  <Label text="类    型:" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+  <HBox alignment="BOTTOM_RIGHT" spacing="10" GridPane.columnIndex="2" GridPane.rowIndex="6">
+    <Button text="保存" onAction="#save" />
+  </HBox>
+  <Text fx:id="actionTarget" GridPane.columnSpan="4" GridPane.halignment="RIGHT" GridPane.rowIndex="8" />
+   <ChoiceBox fx:id="chbType" prefHeight="23.0" prefWidth="167.0" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+  <stylesheets>
+    <URL value="@../login.css" />
+  </stylesheets>
+  <columnConstraints>
+    <ColumnConstraints />
+    <ColumnConstraints />
+    <ColumnConstraints />
+    <ColumnConstraints />
+    <ColumnConstraints />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints />
+    <RowConstraints />
+    <RowConstraints />
+    <RowConstraints />
+    <RowConstraints />
+    <RowConstraints />
+    <RowConstraints />
+    <RowConstraints />
+      <RowConstraints />
+  </rowConstraints>
+</GridPane>
