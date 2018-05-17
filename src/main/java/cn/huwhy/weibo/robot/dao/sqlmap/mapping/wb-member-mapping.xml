@@ -3,16 +3,18 @@
 <mapper namespace="cn.huwhy.weibo.robot.dao.WbMemberDao">
 
   <sql id="COLUMNS">
-    id,`nick`,`home`,`head_img`,`good_num`,`bad_num`
+    id,`nick`,`home`,`head_img`,`sex`,`addr`,`card`,`big_v`,`fans_num`,`v_tag_ids`,`tag_ids`,`good_num`,`bad_num`
   </sql>
   
   <insert id="save">
     insert into wb_member(
     <include refid="COLUMNS"/>
     ) VALUES (
-    #{id},#{nick},#{home},#{headImg},#{goodNum},#{badNum}
+    #{id},#{nick},#{home},#{headImg},#{sex},#{addr},#{card},#{bigV},#{fansNum},#{vTagIds},#{tagIds},#{goodNum},#{badNum}
     ) on duplicate key update nick=VALUES(nick),home=VALUES(home),
-    head_img=VALUES(head_img),good_num=good_num+VALUES(good_num),bad_num=VALUES(bad_num)+bad_num
+    head_img=VALUES(head_img),big_v=VALUES(big_v),v_tag_ids=deleteTagRepeat(concat(VALUES(v_tag_ids),v_tag_ids)),
+    tag_ids=deleteTagRepeat(concat(VALUES(tag_ids),tag_ids)),
+    good_num=good_num+VALUES(good_num),bad_num=VALUES(bad_num)+bad_num
   </insert>
   
   <insert id="saves">
@@ -22,12 +24,13 @@
     <foreach collection="list" item="item" index="index"
              separator=",">
       (
-      #{item.id},#{item.nick},#{item.home},#{item.headImg},#{item.goodNum},#{item.badNum}
+      #{item.id},#{item.nick},#{item.home},#{item.headImg},#{item.sex},#{item.addr},#{item.card},#{item.bigV},
+      #{item.fansNum},#{item.vTagIds},#{item.tagIds},#{item.goodNum},#{item.badNum}
       )
     </foreach>
-    on duplicate key update nick=VALUES(nick),home=VALUES(home),
-    head_img=VALUES(head_img),
-    good_num=good_num+VALUES(good_num),bad_num=VALUES(bad_num)+bad_num
+    on duplicate key update nick=VALUES(nick),home=VALUES(home),fans_num=VALUES(fans_num),
+    head_img=VALUES(head_img),big_v=VALUES(big_v),v_tag_ids=VALUES(v_tag_ids),tag_ids=VALUES(tag_ids),
+    good_num=good_num+VALUES(good_num),bad_num=VALUES(bad_num)+bad_num,sex=VALUES(sex),addr=VALUES(addr),card=VALUES(card)
   </insert>
   
   <select id="get" resultType="WbMember" parameterType="Integer">

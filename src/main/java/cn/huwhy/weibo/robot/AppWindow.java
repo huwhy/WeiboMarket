@@ -22,11 +22,6 @@ public class AppWindow extends Application {
         AppContext.showLogin();
         InputStream iconStream = AppWindow.class.getClassLoader().getResourceAsStream("logo.jpeg");
         primaryStage.getIcons().add(new Image(iconStream));
-//        SystemTray tray = SystemTray.getSystemTray();
-//        BufferedImage image = ImageIO.read(AppWindow.class.getClassLoader().getResourceAsStream("logo.jpeg"));
-//        TrayIcon icon = new TrayIcon(image, "战狼微博舆情监测系统V1.0!");
-//        tray.add(icon);
-//        primaryStage.setIconified(true);
         primaryStage.show();
 
     }

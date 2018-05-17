@@ -1,61 +1,49 @@
 package cn.huwhy.weibo.robot.service;
 
 import cn.huwhy.interfaces.Paging;
-import cn.huwhy.weibo.robot.dao.WbFansDao;
+import cn.huwhy.weibo.robot.dao.FansDao;
+import cn.huwhy.weibo.robot.dao.MemberDao;
+import cn.huwhy.weibo.robot.dao.TagDao;
 import cn.huwhy.weibo.robot.dao.WbMemberDao;
-import cn.huwhy.weibo.robot.model.MyFans;
-import cn.huwhy.weibo.robot.model.MyFansTerm;
-import cn.huwhy.weibo.robot.model.WbFans;
+import cn.huwhy.weibo.robot.model.FansTerm;
+import cn.huwhy.weibo.robot.model.Tag;
 import cn.huwhy.weibo.robot.model.WbMember;
-import cn.huwhy.common.util.BeanCopyUtils;
+import com.google.common.collect.Collections2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import static cn.huwhy.common.util.BeanCopyUtils.copyProperties;
 
 @Service
 public class FansService {
     @Autowired
-    private WbMemberDao wbMemberDao;
+    private FansDao fansDao;
     @Autowired
-    private WbFansDao wbFansDao;
+    private TagDao tagDao;
+    @Autowired
+    private WbMemberDao wbMemberDao;
 
-    public Paging<MyFans> findMyFans(MyFansTerm term) {
-        List<MyFans> list = wbFansDao.findFansPaging(term);
-        return new Paging<>(term, list);
-    }
 
-    @Transactional
-    public void save(MyFans myFans) {
-        WbFans fans = new WbFans();
-        fans.setId(myFans.getMemberId());
-        fans.setType(myFans.getType());
-        fans.setWbId(myFans.getId());
-        wbFansDao.save(fans);
-    }
-
-    @Transactional
-    public void save(Collection<MyFans> myFansList) {
-        if (myFansList.isEmpty()) return;
-        List<WbMember> wbMembers = new ArrayList<>();
-        List<WbFans> wbFansList = new ArrayList<>();
-        for (MyFans myFans : myFansList) {
-            WbMember wbMember = copyProperties(myFans, WbMember.class);
-            wbMembers.add(wbMember);
-            WbFans fans = new WbFans();
-            fans.setId(myFans.getMemberId());
-            fans.setType(myFans.getType());
-            fans.setWbId(myFans.getId());
-            fans.setGoodNum(myFans.getGoodNum());
-            fans.setBadNum(myFans.getBadNum());
-            wbFansList.add(fans);
+    public void saveTag(Tag tag) {
+        Tag dbTag = tagDao.getByWord(tag.getWord());
+        if (dbTag == null) {
+            tagDao.save(tag);
+        } else {
+            tag.setId(dbTag.getId());
+            tag.setHitNum(dbTag.getHitNum());
         }
+    }
+
+    public void saveWbMembers(int memberId, List<WbMember> wbMembers) {
+        if (wbMembers.isEmpty()) return;
         wbMemberDao.saves(wbMembers);
-        wbFansDao.saves(wbFansList);
+        Collection<Long> ids = Collections2.transform(wbMembers, WbMember::getId);
+        fansDao.savesByMemberId(memberId, ids);
+    }
+
+    public Paging<String> findFansHomeList(FansTerm term) {
+        List<String> homeList = fansDao.findFansPaging(term);
+        return new Paging<>(term, homeList);
     }
 }

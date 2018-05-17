@@ -8,6 +8,16 @@ public class WbMember implements Serializable {
     private String nick;
     private String home;
     private String headImg;
+    //性别 female  male
+    private String sex;
+    //地区  省市
+    private String addr;
+    //微博标签
+    private String card;
+    private boolean bigV;
+    private int fansNum;
+    private String vTagIds;
+    private String tagIds;
     private int goodNum;
     private int badNum;
 
@@ -41,6 +51,62 @@ public class WbMember implements Serializable {
 
     public void setHeadImg(String headImg) {
         this.headImg = headImg;
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    public String getAddr() {
+        return addr;
+    }
+
+    public void setAddr(String addr) {
+        this.addr = addr;
+    }
+
+    public String getCard() {
+        return card;
+    }
+
+    public void setCard(String card) {
+        this.card = card;
+    }
+
+    public boolean isBigV() {
+        return bigV;
+    }
+
+    public void setBigV(boolean bigV) {
+        this.bigV = bigV;
+    }
+
+    public int getFansNum() {
+        return fansNum;
+    }
+
+    public void setFansNum(int fansNum) {
+        this.fansNum = fansNum;
+    }
+
+    public String getvTagIds() {
+        return vTagIds;
+    }
+
+    public void setvTagIds(String vTagIds) {
+        this.vTagIds = vTagIds;
+    }
+
+    public String getTagIds() {
+        return tagIds;
+    }
+
+    public void setTagIds(String tagIds) {
+        this.tagIds = tagIds;
     }
 
     public int getGoodNum() {

@@ -5,7 +5,7 @@ import cn.huwhy.weibo.robot.AppContext;
 import cn.huwhy.weibo.robot.model.Member;
 import cn.huwhy.weibo.robot.model.MyFansTerm;
 import cn.huwhy.weibo.robot.model.WordType;
-import cn.huwhy.weibo.robot.service.FansService;
+import cn.huwhy.weibo.robot.service.WbFansService;
 import cn.huwhy.weibo.robot.util.SpringContentUtil;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -27,11 +27,11 @@ public class DataController extends BaseController implements Initializable {
     @FXML
     private PieChart chartCount, chartCount2;
 
-    private FansService fansService;
+    private WbFansService wbFansService;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        fansService = SpringContentUtil.getBean(FansService.class);
+        wbFansService = SpringContentUtil.getBean(WbFansService.class);
         count();
     }
 
@@ -45,19 +45,19 @@ public class DataController extends BaseController implements Initializable {
         term.setPage(1);
         term.setSize(1);
         term.setMemberId(AppContext.getMemberId());
-        Paging paging = fansService.findMyFans(term);
+        Paging paging = wbFansService.findMyFans(term);
         long totalNum, redNum, blackNum;
         totalNum = paging.getTotal();
         txTotal.setText("" + totalNum);
 
         term.setType(WordType.IRON);
-        paging = fansService.findMyFans(term);
+        paging = wbFansService.findMyFans(term);
         redNum = paging.getTotal();
         double redRate = totalNum == 0 ? 0 : redNum * 100.0 / totalNum;
         txRed.setText(redNum + "");
 
         term.setType(WordType.BLACK);
-        paging = fansService.findMyFans(term);
+        paging = wbFansService.findMyFans(term);
         blackNum = paging.getTotal();
         double blackRate = totalNum == 0 ? 0 : blackNum * 100.0 / totalNum;
         txBlack.setText(blackNum + "");

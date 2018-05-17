@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.huwhy.weibo.robot.dao.TagDao">
+
+  <sql id="COLUMNS">
+    id,`word`,`hit_num`
+  </sql>
+  
+  <insert id="save" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+    insert into tags(
+    <include refid="COLUMNS"/>
+    ) VALUES (
+    #{id},#{word},#{hitNum}
+    ) on duplicate key update word=VALUES(word),`hit_num`=VALUES(hit_num)
+  </insert>
+  
+  
+  <insert id="saves">
+    insert into tags(
+    <include refid="COLUMNS"/>
+    ) VALUES
+    <foreach collection="list" item="item" index="index"
+             separator=",">
+      (
+      #{item.id},#{item.word},#{item.hitNum}
+      )
+    </foreach>
+    on duplicate key update word=VALUES(word),`hit_num`=VALUES(hit_num)
+  </insert>
+  
+  <select id="get" resultType="Tag" parameterType="Long">
+    select <include refid="COLUMNS" /> from tags where `id`=#{id}
+    limit 1
+  </select>
+  
+  <select id="getByWord" resultType="Tag" parameterType="String">
+    select <include refid="COLUMNS" /> from tags where `word`=#{word}
+    limit 1
+  </select>
+  
+  <select id="findPaging" resultType="Tag">
+    select <include refid="COLUMNS" /> from tags
+  </select>
+  
+  <update id="plusHitNum">
+    update tags set hit_num=hit_num+num where id=#{id}
+  </update>
+
+</mapper>

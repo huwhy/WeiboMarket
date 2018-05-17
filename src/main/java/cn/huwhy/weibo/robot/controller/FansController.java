@@ -1,14 +1,12 @@
 package cn.huwhy.weibo.robot.controller;
 
-import cn.huwhy.common.util.StringUtil;
 import cn.huwhy.interfaces.Paging;
 import cn.huwhy.weibo.robot.AppContext;
 import cn.huwhy.weibo.robot.model.MyFans;
 import cn.huwhy.weibo.robot.model.MyFansTerm;
 import cn.huwhy.weibo.robot.model.WordType;
-import cn.huwhy.weibo.robot.service.FansService;
+import cn.huwhy.weibo.robot.service.WbFansService;
 import cn.huwhy.weibo.robot.util.SpringContentUtil;
-import com.sun.javafx.scene.control.skin.LabeledText;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -22,19 +20,9 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundImage;
-import javafx.scene.layout.BackgroundPosition;
-import javafx.scene.layout.BackgroundRepeat;
-import javafx.scene.layout.BackgroundSize;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -50,12 +38,12 @@ public class FansController extends BaseController implements Initializable {
     @FXML
     private Label lbWordNum;
 
-    private FansService fansService;
+    private WbFansService wbFansService;
     private MyFansTerm term;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        fansService = SpringContentUtil.getBean(FansService.class);
+        wbFansService = SpringContentUtil.getBean(WbFansService.class);
 
         if (chbType != null) {
             chbType.setItems(FXCollections.observableArrayList(WordType.values()));
@@ -92,28 +80,28 @@ public class FansController extends BaseController implements Initializable {
             });
             colHome.setCellValueFactory(new PropertyValueFactory<>("home"));
             TableColumn<MyFans, String> colHeadImg = new TableColumn<>("头像");
-            colHeadImg.setCellFactory(param -> {
-                TextFieldTableCell<MyFans, String> cell = new TextFieldTableCell<MyFans, String>() {
-                    public void updateItem(String item, boolean empty) {
-                        super.updateItem("", empty);
-                        if (StringUtil.isNotEmpty(item)) {
-                            this.setStyle("-fx-background-image: url('" + item + "')");
-//                            BackgroundImage backgroundImage = new BackgroundImage(new Image(item),
-//                                    BackgroundRepeat.NO_REPEAT,
-//                                    BackgroundRepeat.NO_REPEAT,
-//                                    BackgroundPosition.CENTER,
-//                                    BackgroundSize.DEFAULT);
-//                            this.setBackground(new Background(backgroundImage));
-                        }
-                    }
-                };
-                cell.setMinHeight(50);
-                cell.setPrefHeight(50);
-                return cell;
-            });
-            colHeadImg.setCellValueFactory(new PropertyValueFactory<>("headImg"));
+//            colHeadImg.setCellFactory(param -> {
+//                TextFieldTableCell<MyFans, String> cell = new TextFieldTableCell<MyFans, String>() {
+//                    public void updateItem(String item, boolean empty) {
+//                        super.updateItem("", empty);
+//                        if (StringUtil.isNotEmpty(item)) {
+//                            this.setStyle("-fx-background-image: url('" + item + "')");
+////                            BackgroundImage backgroundImage = new BackgroundImage(new Image(item),
+////                                    BackgroundRepeat.NO_REPEAT,
+////                                    BackgroundRepeat.NO_REPEAT,
+////                                    BackgroundPosition.CENTER,
+////                                    BackgroundSize.DEFAULT);
+////                            this.setBackground(new Background(backgroundImage));
+//                        }
+//                    }
+//                };
+//                cell.setMinHeight(50);
+//                cell.setPrefHeight(50);
+//                return cell;
+//            });
+//            colHeadImg.setCellValueFactory(new PropertyValueFactory<>("headImg"));
 
-            tableView.getColumns().addAll(colHeadImg, colId, colNick, colType, colHome);
+            tableView.getColumns().addAll(colId, colNick, colType, colHome);
             loadWord(1, term.getType());
             pagePre.setOnAction(event -> {
                 int curPage = Integer.parseInt(pageCur.getText());
@@ -133,7 +121,7 @@ public class FansController extends BaseController implements Initializable {
         term.setSize(20);
         term.setType(type);
         term.setMemberId(AppContext.getMemberId());
-        Paging<MyFans> paging = fansService.findMyFans(term);
+        Paging<MyFans> paging = wbFansService.findMyFans(term);
         ObservableList<MyFans> items = FXCollections.observableArrayList(paging.getData());
         tableView.setItems(items);
         tableView.refresh();

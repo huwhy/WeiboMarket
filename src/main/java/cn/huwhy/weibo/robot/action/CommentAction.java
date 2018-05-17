@@ -8,7 +8,7 @@ import cn.huwhy.weibo.robot.model.Task;
 import cn.huwhy.weibo.robot.model.TaskStatus;
 import cn.huwhy.weibo.robot.model.Word;
 import cn.huwhy.weibo.robot.model.WordType;
-import cn.huwhy.weibo.robot.service.FansService;
+import cn.huwhy.weibo.robot.service.WbFansService;
 import cn.huwhy.weibo.robot.service.MemberService;
 import cn.huwhy.weibo.robot.service.TaskService;
 import cn.huwhy.weibo.robot.service.WordService;
@@ -50,7 +50,7 @@ public class CommentAction {
     private Map<Long, MyFans> fansMap = new HashMap<>();
 
     @Autowired
-    private FansService fansService;
+    private WbFansService wbFansService;
     @Autowired
     private WordService wordService;
     @Autowired
@@ -252,7 +252,7 @@ public class CommentAction {
                         task.setSummary(String.format(summaryFormat, total, delNum));
                         taskService.save(task);
                         caller.call();
-                        fansService.save(myFansList);
+                        wbFansService.save(myFansList);
                         page++;
                     } else if (page <= totalPage) {
                         page++;
@@ -267,7 +267,7 @@ public class CommentAction {
             task.setEndTime(new Date());
             taskService.save(task);
             if (!fansMap.isEmpty()) {
-                fansService.save(fansMap.values());
+                wbFansService.save(fansMap.values());
                 if (!hitWords.isEmpty()) {
                     wordService.saves(hitWords);
                 }

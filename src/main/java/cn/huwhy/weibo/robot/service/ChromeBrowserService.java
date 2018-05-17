@@ -1,14 +1,12 @@
 package cn.huwhy.weibo.robot.service;
 
-import cn.huwhy.common.util.Base64;
 import cn.huwhy.common.util.StringUtil;
 import cn.huwhy.common.util.ThreadUtil;
 import cn.huwhy.weibo.robot.model.Member;
 import cn.huwhy.weibo.robot.util.ResourcesUtil;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.service.DriverService;
@@ -52,8 +50,11 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
                 this.driver = null;
             }
         }
+        ChromeOptions chromeOptions = new ChromeOptions();
+//        chromeOptions.addArguments("--kiosk");//全屏
+//        chromeOptions.addArguments("--start-maximized");
         this.driver = new RemoteWebDriver(service.getUrl(),
-                DesiredCapabilities.chrome());
+                DesiredCapabilities.chrome().merge(chromeOptions));
     }
 
     public void login(Member member) {
