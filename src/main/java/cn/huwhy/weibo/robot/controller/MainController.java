@@ -1,13 +1,11 @@
 package cn.huwhy.weibo.robot.controller;
 
 import cn.huwhy.common.util.Base64;
-import cn.huwhy.common.util.RandomUtil;
 import cn.huwhy.common.util.StringUtil;
 import cn.huwhy.weibo.robot.AppContext;
 import cn.huwhy.weibo.robot.model.Member;
 import cn.huwhy.weibo.robot.service.MemberService;
 import cn.huwhy.weibo.robot.util.SpringContentUtil;
-import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
@@ -34,33 +32,21 @@ public class MainController extends BaseController implements Initializable {
     @FXML
     private TabPane tabPane;
     @FXML
-    private Tab tabWb, tabWords, tabTask, tabMarket, tabFans, tabData, tabMy;
+    private Tab tabWb, tabWords, tabTask, tabSearch, tabMarket, tabFans, tabData, tabMy;
     private MemberService memberService;
 
     public void refreshCode() {
-        code = RandomUtil.getRandomNum(4);
-        lbCode.setText("验证码 " + code + " 刷新");
+//        code = RandomUtil.getRandomNum(4);
+//        lbCode.setText("验证码 " + code + " 刷新");
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        code = RandomUtil.getRandomNum(4);
         refreshCode();
-        tabPane.getTabs().removeAll(tabWords, tabTask, tabMarket, tabFans, tabData, tabMy);
+//        tabPane.getTabs().removeAll(tabWords, tabTask, tabSearch, tabMarket, tabFans, tabData, tabMy);
         memberService = SpringContentUtil.getBean(MemberService.class);
-    }
-
-    public void init() {
-        Member member = AppContext.getMember();
-        if (member != null) {
-            txWbName.setText(member.getWbName());
-            if (StringUtil.isNotEmpty(member.getWbName())) {
-                txWbName.setEditable(false);
-            }
-            if (StringUtil.isNotEmpty(member.getWbPassword())) {
-                txWbPwd.setText(new String(Base64.decode(member.getWbPassword().getBytes())));
-            }
-        }
+        AppContext.setMainController(this);
+        initTabs();
     }
 
     @FXML
@@ -80,8 +66,6 @@ public class MainController extends BaseController implements Initializable {
                     memberService.save(member);
                 }
             }
-            tabPane.getTabs().remove(tabWb);
-            tabPane.getTabs().addAll(tabWords, tabTask, tabMarket, tabFans, tabData, tabMy);
         } else {
             Alert alert = new Alert(Alert.AlertType.WARNING, "");
             alert.setTitle("提示");
@@ -90,29 +74,44 @@ public class MainController extends BaseController implements Initializable {
         }
     }
 
-    @FXML
-    public void tabSelected(Event e) {
-        if (e.getTarget() == tabWb) {
-        } else if (e.getTarget() == tabWords) {
+    private void initTabs() {
+        if (tabWb.getContent() == null) {
+            Parent parent = AppContext.loadFxml("wb_account/index.fxml");
+            tabWb.setContent(parent);
+        }
+        if (tabWords.getContent() == null) {
             Parent parent = AppContext.loadFxml("word/list.fxml");
             tabWords.setContent(parent);
-        } else if (e.getTarget() == tabFans) {
+        }
+        if (tabFans.getContent() == null) {
             Parent parent = AppContext.loadFxml("fans/list.fxml");
             tabFans.setContent(parent);
-        } else if (e.getTarget() == tabTask) {
+        }
+        if (tabTask.getContent() == null) {
             Parent parent = AppContext.loadFxml("task/index.fxml");
             tabTask.setContent(parent);
-        } else if (e.getTarget() == tabMarket) {
-            Parent parent = AppContext.loadFxml("task/index2.fxml");
+        }
+        if (tabSearch.getContent() == null) {
+            Parent parent = AppContext.loadFxml("market/search.fxml");
+            tabSearch.setContent(parent);
+        }
+        if (tabMarket.getContent() == null) {
+            Parent parent = AppContext.loadFxml("market/sms.fxml");
             tabMarket.setContent(parent);
-        } else if (e.getTarget() == tabData) {
+        }
+        if (tabData.getContent() == null) {
             AppContext.setAutoTask(true);
             Parent parent = AppContext.loadFxml("data/index.fxml");
             tabData.setContent(parent);
-        } else if (e.getTarget() == tabMy) {
+        }
+        if (tabMy.getContent() == null) {
             Parent parent = AppContext.loadFxml("my/setting.fxml");
             tabMy.setContent(parent);
         }
+    }
+
+    public void activeMarket() {
+        tabPane.getSelectionModel().select(2);
     }
 
 }

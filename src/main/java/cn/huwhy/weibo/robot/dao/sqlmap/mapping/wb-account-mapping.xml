@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.huwhy.weibo.robot.dao.WbAccountDao">
+  
+  <sql id="COLUMNS">
+    id,`member_id`,`username`,`password`
+  </sql>
+  
+  <insert id="save">
+    insert into wb_account(
+    <include refid="COLUMNS"/>
+    ) VALUES (
+    #{id},#{memberId},#{username},#{password}
+    ) on duplicate key update username=VALUES(username),password=VALUES(password)
+  </insert>
+  
+  <select id="get" resultType="WbAccount" parameterType="Integer">
+    select
+    <include refid="COLUMNS"/>
+    from wb_account where `id`=#{id}
+    limit 1
+  </select>
+  
+  <select id="getByMemberId" resultType="WbAccount" parameterType="Integer">
+    select
+    <include refid="COLUMNS"/>
+    from wb_account where `member_id`=#{memberId}
+    limit #{num}
+  </select>
+  
+  <select id="findPaging" resultType="WbAccount">
+    select
+    <include refid="COLUMNS"/>
+    from wb_account
+    <where>
+      <if test="username != null and username != ''">
+        and username like #{username}
+      </if>
+    </where>
+  </select>
+
+</mapper>

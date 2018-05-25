@@ -12,6 +12,7 @@ public class Member implements Serializable {
     private int redCommentNum;
     private int blackCommentNum;
     private long lastCommentId;
+    private int wbNum;
 
     public Member() {
     }
@@ -91,6 +92,14 @@ public class Member implements Serializable {
 
     public void setLastCommentId(long lastCommentId) {
         this.lastCommentId = lastCommentId;
+    }
+
+    public int getWbNum() {
+        return wbNum;
+    }
+
+    public void setWbNum(int wbNum) {
+        this.wbNum = wbNum;
     }
 
     private MemberConfig config = new MemberConfig();

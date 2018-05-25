@@ -14,7 +14,7 @@ public abstract class BaseController {
     public void refresh() {
     }
 
-    public void init() {
+    public void windowsClose() {
 
     }
 

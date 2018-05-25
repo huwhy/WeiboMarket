@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import java.net.URL?>
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0"
             prefWidth="1024.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
@@ -19,46 +11,14 @@
     <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE"
              BorderPane.alignment="CENTER">
       <tabs>
-        <Tab fx:id="tabWb" text="微博帐户登录">
-          <content>
-            <GridPane alignment="CENTER" hgap="5" prefHeight="200.0" prefWidth="200.0" vgap="5">
-              <Label text="微博帐号:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-              <TextField fx:id="txWbName" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="2"/>
-              <Label text="微博帐号设置后不可更改" textFill="#f8cd0d" GridPane.columnIndex="1" GridPane.columnSpan="2"
-                     GridPane.rowIndex="3"/>
-              <Label text="微博密码:" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
-              <PasswordField fx:id="txWbPwd" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="4"/>
-              <Label text="验  证  码:" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-              <TextField fx:id="txCode" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="5"/>
-              <Label fx:id="lbCode" onMouseClicked="#refreshCode" text="验证码  刷新" GridPane.columnIndex="1"
-                     GridPane.columnSpan="2" GridPane.rowIndex="6"/>
-              <HBox alignment="BOTTOM_RIGHT" spacing="10" GridPane.columnIndex="2" GridPane.rowIndex="7">
-                <Button onAction="#btnLoginClick" text="登录微博"/>
-              </HBox>
-              <columnConstraints>
-                <ColumnConstraints/>
-                <ColumnConstraints/>
-                <ColumnConstraints/>
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints/>
-                <RowConstraints/>
-                <RowConstraints/>
-                <RowConstraints/>
-                <RowConstraints/>
-                <RowConstraints/>
-                <RowConstraints/>
-                <RowConstraints/>
-              </rowConstraints>
-            </GridPane>
-          </content>
-        </Tab>
-        <Tab fx:id="tabWords" onSelectionChanged="#tabSelected" text="自定义敏感词"/>
-        <Tab fx:id="tabTask" text="任务中心" onSelectionChanged="#tabSelected"/>
-        <Tab fx:id="tabMarket" text="营销" onSelectionChanged="#tabSelected"/>
-        <Tab fx:id="tabFans" text="粉丝管理" onSelectionChanged="#tabSelected"/>
-        <Tab fx:id="tabData" text="数据统计" onSelectionChanged="#tabSelected"/>
-        <Tab fx:id="tabMy" text="设置" onSelectionChanged="#tabSelected"/>
+        <Tab fx:id="tabWb" text="微博帐户设置"/>
+        <Tab fx:id="tabSearch" text="微博搜索"/>
+        <Tab fx:id="tabMarket" text="微博营销"/>
+        <Tab fx:id="tabWords" text="自定义敏感词"/>
+        <Tab fx:id="tabTask" text="任务中心"/>
+        <Tab fx:id="tabFans" text="粉丝管理"/>
+        <Tab fx:id="tabData" text="数据统计"/>
+        <Tab fx:id="tabMy" text="设置"/>
       </tabs>
     </TabPane>
   </center>

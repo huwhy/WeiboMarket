@@ -1,15 +1,22 @@
 package cn.huwhy.weibo.robot;
 
 import cn.huwhy.weibo.robot.controller.BaseController;
+import cn.huwhy.weibo.robot.controller.MainController;
+import cn.huwhy.weibo.robot.controller.MarketController;
 import cn.huwhy.weibo.robot.model.Member;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+import org.openqa.selenium.WebDriver;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class AppContext implements Serializable {
     private static final AppContext ctx = new AppContext();
@@ -20,6 +27,29 @@ public final class AppContext implements Serializable {
     private Member member;
     private Stage mainState, modelState;
     private volatile boolean isAutoTask;
+    private MainController mainController;
+    private MarketController marketController;
+    private Map<String, WebDriver> driverMap = new HashMap<>();
+
+    public static void setMainController(MainController mainController) {
+        ctx.mainController = mainController;
+    }
+
+    public static void setMarketController(MarketController marketController) {
+        ctx.marketController = marketController;
+    }
+
+    public static void putDriver(String username, WebDriver driver) {
+        ctx.driverMap.put(username, driver);
+    }
+
+    public static WebDriver getDriver(String username) {
+        return ctx.driverMap.get(username);
+    }
+
+    public static MarketController getMarketController() {
+        return ctx.marketController;
+    }
 
     public static void setMember(Member member) {
         ctx.member = member;
@@ -40,14 +70,16 @@ public final class AppContext implements Serializable {
     public static <T> T showModel(String fxml) throws Exception {
         FXMLLoader loader = new FXMLLoader(AppContext.class.getClassLoader().getResource(fxml));
         Parent target = loader.load();
+        T controller = loader.getController();
         Scene scene = new Scene(target); //创建场景；
         ctx.modelState = new Stage();//创建舞台；
         ctx.modelState.initModality(Modality.APPLICATION_MODAL);
+        ctx.modelState.setOnCloseRequest(event -> ((BaseController) controller).windowsClose());
         ctx.modelState.initOwner(ctx.mainState);
         ctx.modelState.setScene(scene); //将场景载入舞台；
         ctx.modelState.sizeToScene();
         ctx.modelState.show();
-        return loader.getController();
+        return controller;
     }
 
     public static void closeModel() {
@@ -77,8 +109,7 @@ public final class AppContext implements Serializable {
     public static void showMain(Member member) {
         try {
             AppContext.setMember(member);
-            BaseController main = replaceSceneContent("main.fxml", 1024, 700);
-            main.init();
+            replaceSceneContent("main.fxml", 1024, 700);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -91,6 +122,10 @@ public final class AppContext implements Serializable {
         ctx.mainState.setScene(scene);
         ctx.mainState.sizeToScene();
         return (BaseController) loader.getController();
+    }
+
+    public static void showMarketTab() {
+        ctx.mainController.activeMarket();
     }
 
     public static void setAutoTask(boolean autoTask) {
