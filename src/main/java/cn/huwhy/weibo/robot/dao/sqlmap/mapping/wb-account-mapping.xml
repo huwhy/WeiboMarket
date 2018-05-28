@@ -33,6 +33,9 @@
     <include refid="COLUMNS"/>
     from wb_account
     <where>
+      <if test="memberId > 0">
+        and member_id = #{memberId}
+      </if>
       <if test="username != null and username != ''">
         and username like #{username}
       </if>
