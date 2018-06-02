@@ -17,7 +17,9 @@ import cn.huwhy.weibo.robot.service.ChromeBrowserService;
 import cn.huwhy.weibo.robot.service.FansService;
 import cn.huwhy.weibo.robot.service.WbAccountService;
 import cn.huwhy.weibo.robot.task.ActionTask;
+import cn.huwhy.weibo.robot.task.GroupActionTask;
 import cn.huwhy.weibo.robot.task.TaskContext;
+import cn.huwhy.weibo.robot.task.TaskGroupContent;
 import cn.huwhy.weibo.robot.util.SpringContentUtil;
 import com.google.common.collect.Collections2;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -98,10 +100,6 @@ public class MarketController extends BaseController implements Initializable {
             }
         });
         AppContext.setMarketController(this);
-
-//        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-//            txLink.setText(newValue);
-//        });
     }
 
     public void btnExecSms() {
@@ -109,12 +107,25 @@ public class MarketController extends BaseController implements Initializable {
             lbTip.setText("请输入私信内容");
             return;
         }
-        int max = this.queue.size();
-        if (AppContext.getMember().getWbNum() < max) {
-            max = AppContext.getMember().getWbNum();
+        wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), 100);
+        int wbNum = AppContext.getMember().getWbNum();
+        int groups = wbAccounts.size() / wbNum + 1;
+        List<ActionTask> taskList = new ArrayList<>(groups);
+        List<GroupActionTask> groupActionTasks = new ArrayList<>(groups);
+        int aIndex = 0;
+        for (int i = 0; i < groups; i++) {
+            List<WbAccount> accounts = new ArrayList<>(wbNum);
+            for (int j =  wbNum * i; j < wbAccounts.size() && j < wbNum * (i + 1); j++) {
+                accounts.add(wbAccounts.get(j));
+            }
+            GroupActionTask task = new GroupActionTask(new TaskGroupContent(accounts)) {
+                @Override
+                public void run() {
+
+                }
+            };
+            groupActionTasks.add(task);
         }
-        wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), max);
-        List<ActionTask> taskList = new ArrayList<>(wbAccounts.size());
         for (WbAccount account : wbAccounts) {
             WebDriver driver = AppContext.getDriver(account.getUsername());
             if (driver == null) {

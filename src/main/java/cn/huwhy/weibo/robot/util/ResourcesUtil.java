@@ -10,7 +10,7 @@ import static cn.huwhy.weibo.robot.util.SystemType.WINDOWS;
 
 public class ResourcesUtil {
 
-    private final static SystemType SYSTEM_TYPE;
+    public final static SystemType SYSTEM_TYPE;
 
     private static Logger logger = LoggerFactory.getLogger(ResourcesUtil.class);
 
@@ -46,8 +46,3 @@ public class ResourcesUtil {
     }
 }
 
-enum SystemType {
-    WINDOWS,
-    MAC,
-    LINUX
-}

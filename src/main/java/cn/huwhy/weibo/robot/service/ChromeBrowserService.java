@@ -120,6 +120,9 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
         ChromeOptions chromeOptions = new ChromeOptions();
         WebDriver driver = new RemoteWebDriver(service.getUrl(),
                 DesiredCapabilities.chrome().merge(chromeOptions));
+        Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
+        driver.manage().window().setSize(new org.openqa.selenium.Dimension(screensize.width, screensize.height));
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
         if (StringUtil.isNotEmpty(account.getUsername()) && StringUtil.isNotEmpty(account.getPassword())) {
             //得到浏览器的标题
             driver.get("https://weibo.com/");
@@ -139,9 +142,6 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
 //                }
                 ThreadUtil.sleepSeconds(3);
             } while (true);
-            Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
-            driver.manage().window().setSize(new org.openqa.selenium.Dimension(screensize.width, screensize.height));
-            driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
             logger.debug("login weibo end");
         }
 
