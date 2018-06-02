@@ -4,6 +4,7 @@ import cn.huwhy.weibo.robot.model.common.SearchType;
 import cn.huwhy.weibo.robot.ui.MyCheckBox;
 
 import java.io.Serializable;
+import java.util.Date;
 
 public class SearchResult implements Serializable {
     private long id;
@@ -12,6 +13,7 @@ public class SearchResult implements Serializable {
     private String title;
     private String content;
     private String url;
+    private Date created;
     private MyCheckBox cb = new MyCheckBox();
 
     public long getId() {
@@ -68,5 +70,13 @@ public class SearchResult implements Serializable {
 
     public void setCb(MyCheckBox cb) {
         this.cb = cb;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 }

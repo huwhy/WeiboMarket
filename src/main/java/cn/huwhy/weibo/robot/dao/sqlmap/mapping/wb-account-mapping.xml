@@ -14,6 +14,17 @@
     ) on duplicate key update username=VALUES(username),password=VALUES(password)
   </insert>
   
+  <delete id="delete">
+    delete from wb_account where id=#{id}
+  </delete>
+  
+  <delete id="deletes">
+    delete from wb_account where id in
+    <foreach collection="ids" index="index" open="(" separator="," close=")">
+      #{ids[${index}]}
+    </foreach>
+  </delete>
+  
   <select id="get" resultType="WbAccount" parameterType="Integer">
     select
     <include refid="COLUMNS"/>

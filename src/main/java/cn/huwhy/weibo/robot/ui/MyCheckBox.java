@@ -42,4 +42,8 @@ public class MyCheckBox {
     public boolean isSelected() {
         return checkBox.isSelected();
     }
+
+    public void setSelected(boolean selected) {
+        checkBox.setSelected(selected);
+    }
 }

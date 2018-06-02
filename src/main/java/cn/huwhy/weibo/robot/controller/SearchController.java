@@ -2,10 +2,12 @@ package cn.huwhy.weibo.robot.controller;
 
 import cn.huwhy.common.util.StringUtil;
 import cn.huwhy.common.util.ThreadUtil;
+import cn.huwhy.interfaces.Term;
 import cn.huwhy.weibo.robot.AppContext;
 import cn.huwhy.weibo.robot.action.ActionUtil;
 import cn.huwhy.weibo.robot.dao.SearchResultDao;
 import cn.huwhy.weibo.robot.model.SearchResult;
+import cn.huwhy.weibo.robot.model.SearchResultTerm;
 import cn.huwhy.weibo.robot.model.Tag;
 import cn.huwhy.weibo.robot.model.WbAccount;
 import cn.huwhy.weibo.robot.model.WbMember;
@@ -32,6 +34,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.MouseEvent;
+import org.joda.time.LocalDate;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -41,6 +44,7 @@ import java.awt.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -57,6 +61,7 @@ public class SearchController extends BaseController implements Initializable {
     private TableView<SearchResult> tableView;
     @FXML
     private Label lbTip, lbTotal;
+    private SearchResultTerm term = new SearchResultTerm();
 
     private ChromeBrowserService chromeBrowserService;
     private FansService fansService;
@@ -124,6 +129,12 @@ public class SearchController extends BaseController implements Initializable {
         });
 
         tableView.getColumns().addAll(colCk, colId, colType, colTitle, colContent, colLink);
+        term.setCreatedFrom(LocalDate.now().plusDays(-1).toDate());
+        term.setPage(1);
+        term.setSize(20);
+        term.setMemberId(AppContext.getMemberId());
+        term.addSort("created", Term.Sort.DESC);
+        loadData();
     }
 
     private WebDriver driver;
@@ -152,7 +163,7 @@ public class SearchController extends BaseController implements Initializable {
                     AppContext.putDriver(wbAccount.getUsername(), driver);
                 }
             }
-            TaskContext context = new TaskContext(wbAccount, driver);
+            TaskContext context = new TaskContext(wbAccount, driver, 10);
             new ActionTask(context) {
                 @Override
                 public void run() {
@@ -169,6 +180,7 @@ public class SearchController extends BaseController implements Initializable {
                                 String title = face.getAttribute("title");
                                 WebElement content = element.findElement(By.cssSelector(".WB_feed_detail .feed_content .comment_txt"));
                                 SearchResult result = new SearchResult();
+                                result.setCreated(new Date());
                                 result.setMemberId(AppContext.getMemberId());
                                 result.setTitle(title);
                                 result.setContent(content.getText().length() > 128 ? content.getText().substring(0, 128) : content.getText());
@@ -196,12 +208,14 @@ public class SearchController extends BaseController implements Initializable {
                         while (true) {
                             List<WebElement> elements;
                             do {
+                                //TODO: 搜索结果为空 会出现死循环
                                 ThreadUtil.sleep(500);
                                 elements = driver.findElements(By.cssSelector(".pl_personlist .list_person"));
                             } while (elements.isEmpty());
                             List<WbMember> wbMembers = new ArrayList<>(elements.size());
                             for (WebElement element : elements) {
                                 SearchResult result = new SearchResult();
+                                result.setCreated(new Date());
                                 result.setMemberId(AppContext.getMemberId());
                                 result.setType(SearchType.找人);
                                 WebElement he = element.findElement(By.cssSelector(".person_pic a img"));
@@ -247,13 +261,19 @@ public class SearchController extends BaseController implements Initializable {
                         }
                     }
                     if (!resultList.isEmpty()) {
-//                        searchResultDao.saves(resultList);
-                        loadData(resultList);
+                        searchResultDao.saves(resultList);
+                        loadData();
                     }
                 }
             }.run();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void selectAll() {
+        for (SearchResult result : tableView.getItems()) {
+            result.getCb().setSelected(true);
         }
     }
 
@@ -268,10 +288,30 @@ public class SearchController extends BaseController implements Initializable {
         AppContext.getMarketController().setSearchResults(results);
     }
 
+    public void test() {
+        List<WbAccount> wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), 10);
+        for (WbAccount account : wbAccounts) {
+            if (driver == null) {
+                driver = chromeBrowserService.getDriver(account);
+            } else {
+                if (driver.findElements(By.className("login_btn")).size() == 0) {
+                    WebElement element = driver.findElement(By.cssSelector(".gn_position a[node-type=account]"));
+                    ActionUtil.moveToEl(driver, element);
+                    ThreadUtil.sleepSeconds(2);
+                    WebElement quitElement = driver.findElement(By.cssSelector("a[suda-data='key=account_setup&value=quit']"));
+                    quitElement.click();
+                }
+                chromeBrowserService.loginWb(account, driver);
+            }
+            ThreadUtil.sleepSeconds(5);
+        }
+    }
+
     public void refresh() {
     }
 
-    private void loadData(List<SearchResult> resultList) {
+    private void loadData() {
+        List<SearchResult> resultList = searchResultDao.findPaging(term);
         ObservableList<SearchResult> tasks = observableArrayList(resultList);
         tableView.setItems(tasks);
         tableView.refresh();

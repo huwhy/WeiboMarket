@@ -3,6 +3,7 @@ package cn.huwhy.weibo.robot.controller;
 import cn.huwhy.common.util.StringUtil;
 import cn.huwhy.interfaces.Paging;
 import cn.huwhy.weibo.robot.AppContext;
+import cn.huwhy.weibo.robot.model.SearchResult;
 import cn.huwhy.weibo.robot.model.WbAccount;
 import cn.huwhy.weibo.robot.model.common.WbAccountTerm;
 import cn.huwhy.weibo.robot.service.WbAccountService;
@@ -12,6 +13,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableColumn;
@@ -21,6 +23,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.text.Text;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class WbAccountController extends BaseController implements Initializable {
@@ -99,6 +103,19 @@ public class WbAccountController extends BaseController implements Initializable
         AppContext.closeModel();
     }
 
+    public void del() {
+        List<Integer> results = new ArrayList<>();
+        for (WbAccount account : tableView.getItems()) {
+            if (account.getCb().isSelected()) {
+                results.add(account.getId());
+            }
+        }
+        if (!results.isEmpty()) {
+            this.wbAccountService.delByIds(results);
+            refresh();
+        }
+    }
+
     @Override
     public void refresh() {
         loadData(term);
@@ -121,18 +138,21 @@ public class WbAccountController extends BaseController implements Initializable
     }
 
     private void initTableColumns() {
+        TableColumn<WbAccount, CheckBox> colCk = new TableColumn<>("选择");
+        colCk.setCellValueFactory(cellData -> cellData.getValue().getCb().getCheckBox());
         TableColumn<WbAccount, Integer> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         TableColumn<WbAccount, String> colUsername = new TableColumn<>("微博帐号");
         colUsername.setCellValueFactory(new PropertyValueFactory<>("username"));
         colUsername.setMinWidth(100);
-        tableView.getColumns().addAll(colId, colUsername);
+        tableView.getColumns().addAll(colCk, colId, colUsername);
     }
 
     private void initPaging() {
         term = new WbAccountTerm();
         term.setSize(20);
         term.setPage(1);
+        term.setMemberId(AppContext.getMemberId());
 
         pagePre.setOnAction(event -> {
             int curPage = Integer.parseInt(pageCur.getText());

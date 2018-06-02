@@ -91,7 +91,9 @@
         <Insets bottom="5" left="5" right="5" top="5"/>
       </padding>
       <Label fx:id="lbTotal" text="总记录数"/>
-      <Button fx:id="btnSelected" text="处理选中记录" onAction="#dealSelected"/>
+      <Button text="全选" onAction="#selectAll"/>
+      <Button text="处理选中记录" onAction="#dealSelected"/>
+      <Button text="test" onAction="#test"/>
     </FlowPane>
   </bottom>
   <stylesheets>

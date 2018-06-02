@@ -41,6 +41,7 @@
         <Button onAction="#queryEvent" prefWidth="50" text="查询"/>
         <Button onAction="#addEvent" prefWidth="50" text="添加"/>
         <Button onAction="#editEvent" prefWidth="50" text="编辑"/>
+        <Button onAction="#del" prefWidth="50" text="删除"/>
         <Text fx:id="txTip" styleClass="warnTip" />
       </HBox>
       

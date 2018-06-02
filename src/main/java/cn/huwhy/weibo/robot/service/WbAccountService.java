@@ -36,4 +36,11 @@ public class WbAccountService {
         return new Paging<>(term, list);
     }
 
+    public void delById(int id) {
+        wbAccountDao.delete(id);
+    }
+
+    public void delByIds(List<Integer> ids) {
+        wbAccountDao.deletes(ids);
+    }
 }

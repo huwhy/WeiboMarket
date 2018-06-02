@@ -2,7 +2,7 @@ package cn.huwhy.weibo.robot.task;
 
 import java.io.Serializable;
 
-public abstract class ActionTask implements Runnable, Serializable {
+public abstract class ActionTask implements Serializable {
 
     protected TaskContext context;
 
@@ -12,4 +12,7 @@ public abstract class ActionTask implements Runnable, Serializable {
 
     public abstract void run();
 
+    public TaskContext getContext() {
+        return context;
+    }
 }

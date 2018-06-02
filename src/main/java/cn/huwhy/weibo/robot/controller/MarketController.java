@@ -26,8 +26,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
@@ -46,16 +44,11 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static java.net.URLEncoder.encode;
-import static javafx.collections.FXCollections.observableArrayList;
 
 public class MarketController extends BaseController implements Initializable {
 
@@ -63,13 +56,7 @@ public class MarketController extends BaseController implements Initializable {
     @FXML
     private TextArea txtContent;
     @FXML
-    private TextField txLink;
-    @FXML
-    private Label lbTip;
-    @FXML
-    private ChoiceBox chbType;
-    @FXML
-    private CheckBox ckDeal;
+    private Label lbTip, lbResult;
     @FXML
     private ListView<String> listView;
     private List<WbAccount> wbAccounts;
@@ -78,16 +65,11 @@ public class MarketController extends BaseController implements Initializable {
     private FansService fansService;
     private WbAccountService wbAccountService;
 
-    private static Lock singleLock = new ReentrantLock();
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         chromeBrowserService = SpringContentUtil.getBean(ChromeBrowserService.class);
         fansService = SpringContentUtil.getBean(FansService.class);
         wbAccountService = SpringContentUtil.getBean(WbAccountService.class);
-        if (chbType != null) {
-            chbType.setItems(FXCollections.observableArrayList(SearchType.values()));
-        }
         TableColumn<Task, Integer> colId = new TableColumn<>("ID");
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         TableColumn<Task, String> colName = new TableColumn<>("任务名称");
@@ -117,9 +99,9 @@ public class MarketController extends BaseController implements Initializable {
         });
         AppContext.setMarketController(this);
 
-        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            txLink.setText(newValue);
-        });
+//        listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+//            txLink.setText(newValue);
+//        });
     }
 
     public void btnExecSms() {
@@ -127,24 +109,11 @@ public class MarketController extends BaseController implements Initializable {
             lbTip.setText("请输入私信内容");
             return;
         }
-        if (ckDeal.isSelected()) {
-            int max = this.queue.size();
-            if (AppContext.getMember().getWbNum() < max) {
-                max = AppContext.getMember().getWbNum();
-            }
-            wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), max);
-
-        } else {
-            if (StringUtil.isEmpty(txLink.getText())) {
-                lbTip.setText("请输入链接");
-                return;
-            }
-            if (chbType.getSelectionModel().getSelectedItem() == null) {
-                lbTip.setText("请选择链接类型");
-                return;
-            }
-            wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), 1);
+        int max = this.queue.size();
+        if (AppContext.getMember().getWbNum() < max) {
+            max = AppContext.getMember().getWbNum();
         }
+        wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), max);
         List<ActionTask> taskList = new ArrayList<>(wbAccounts.size());
         for (WbAccount account : wbAccounts) {
             WebDriver driver = AppContext.getDriver(account.getUsername());
@@ -152,40 +121,62 @@ public class MarketController extends BaseController implements Initializable {
                 driver = MarketController.this.chromeBrowserService.getDriver(account);
                 AppContext.putDriver(account.getUsername(), driver);
             }
-            ActionTask task = new ActionTask(new TaskContext(account, driver)) {
+            ActionTask task = new ActionTask(new TaskContext(account, driver, 10)) {
                 @Override
                 public void run() {
-                    Set<String> ids = new HashSet<>();
-                    while (true) {
-                        try {
-                            singleLock.lock();
-                            SearchResult result = queue.poll();
-                            if (result != null) {
-                                this.context.getDriver().get(result.getUrl());
-                                if (result.getType().equals(SearchType.找人)) {
-                                    execSendSmsToFollow(this.context.getDriver(), ids);
-                                } else {
-                                    sendSmsToCommentFans(this.context.getDriver(), ids);
-                                }
-                            } else {
-                                break;
-                            }
-                        } finally {
-                            singleLock.unlock();
+                    SearchResult result;
+                    if (this.context.isNext()) {
+                        result = queue.poll();
+                        this.context.setResult(result);
+                        if (this.context.getWbMembers().size() > 0) {
+                            fansService.saveWbMembers(AppContext.getMemberId(), this.context.getWbMembers());
+                            this.context.clearWbMembers();
+                        }
+                    } else {
+                        result = context.getResult();
+                    }
+                    if (result != null) {
+                        if (this.context.isNext()) {
+                            this.context.getDriver().get(result.getUrl());
+                        }
+                        if (result.getType().equals(SearchType.找人)) {
+                            execSendSmsToFollow(this.context);
+                        } else {
+                            sendSmsToCommentFans(this.context);
+                        }
+                        if (this.context.getCounter() == this.context.getLimitNum()) {
+                            this.context.setFinished(true);
                         }
                         ThreadUtil.sleepSeconds(15);
+                    } else {
+                        this.context.setFinished(true);
                     }
                 }
             };
             taskList.add(task);
         }
-        for (ActionTask task : taskList) {
-            new Thread(task).start();
+        int cnt = taskList.size();
+        int totalSendNum = 0;
+        while (true) {
+            int finished = 0;
+            for (ActionTask task : taskList) {
+                if (!task.getContext().isFinished()) {
+                    task.run();
+                    if (task.getContext().isFinished()) {
+                        finished++;
+                        totalSendNum += task.getContext().getCounter();
+                    }
+                }
+            }
+            if (finished == cnt) {
+                break;
+            }
         }
+        lbResult.setText("本次共发送私信：" + totalSendNum);
     }
 
     public void execCrawlV() {
-        String text = txLink.getText();
+        String text = "";
         if (StringUtil.isEmpty(text)) {
             lbTip.setText("请输入大V关键词");
             return;
@@ -357,53 +348,44 @@ public class MarketController extends BaseController implements Initializable {
         }
     }
 
-    public void execSMSTask() {
-        if (StringUtil.isEmpty(txtContent.getText())) {
-            lbTip.setText("请输入私信内容");
-            return;
-        }
-        if (StringUtil.isEmpty(txLink.getText())) {
-            lbTip.setText("请输入链接");
-            return;
-        }
-        if (chbType.getSelectionModel().getSelectedItem() == null) {
-            lbTip.setText("请选择链接类型");
-            return;
-        }
-        lbTip.setText("");
-        WebDriver driver = getDriver();
-        driver.get(txLink.getText());
-        try {
-//            if ("粉丝链接".equals(chbType.getSelectionModel().getSelectedItem())) {
-//                execSendSmsToFollow(driver);
-//            } else if ("评论链接".equals(chbType.getSelectionModel().getSelectedItem())) {
-//                sendSmsToCommentFans(driver);
-//            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public void setSearchResults(List<SearchResult> searchResults) {
         if (CollectionUtil.isNotEmpty(searchResults)) {
             queue.addAll(searchResults);
             ObservableList<String> items = FXCollections.observableArrayList(Collections2.transform(searchResults, SearchResult::getUrl));
             listView.setItems(items);
-            ckDeal.setSelected(true);
         }
     }
 
     /**
      * 对粉丝列表发私信(只能抓取前5页大概100条数据)
      *
-     * @param driver
+     * @param context
      */
-    private void execSendSmsToFollow(WebDriver driver, Set<String> ids) {
+    private void execSendSmsToFollow(TaskContext context) {
+        WebDriver driver = context.getDriver();
         JavascriptExecutor je = (JavascriptExecutor) driver;
-        int page = 1;
-        int cnt = 0;
+        if (context.isNext()) {
+            try {
+                WebElement counterEL = driver.findElement(By.cssSelector(".PCD_counter"));
+                List<WebElement> counterList = counterEL.findElements(By.cssSelector(".S_line1"));
+                try {
+                    String link = counterList.get(1).findElement(By.cssSelector(".t_link")).getAttribute("href");
+                    if (context.getPage() == 1) {
+                        driver.get(link);
+                    } else {
+                        String url = link.substring(0, link.indexOf('?')) + "page=" + context.getPage() + "&" + link.substring(link.indexOf('?') + 1);
+                        driver.get(url);
+                    }
+                } catch (Throwable err) {
+                    return;
+                }
+            } catch (NoSuchElementException err) {
+                driver.navigate().refresh();
+            }
+        }
+        context.setNext(false);
         while (true) {
-            List<WebElement> fansList = driver.findElements(By.cssSelector(".follow_box .follow_list .follow_item"));
+            List<WebElement> fansList = driver.findElements(By.cssSelector(".follow_box .follow_list .follow_item:nth-child(n+" + context.getCnter() + ")"));
             if (fansList.size() == 0) {
                 break;
             }
@@ -411,12 +393,49 @@ public class MarketController extends BaseController implements Initializable {
             for (WebElement fans : fansList) {
                 WebElement headEl = fans.findElement(By.cssSelector(".mod_pic a img"));
                 String ac = headEl.getAttribute("usercard");
-                if (!ids.add(ac)) {
+                if (!context.getSet().add(ac)) {
                     continue;
                 }
-                cnt++;
+                context.incrCounter();
                 while (true) {
                     try {
+                        //沉淀粉丝
+                        WbMember wbMember = new WbMember();
+                        WebElement we = fans.findElement(By.cssSelector(".mod_pic a"));
+                        wbMember.setHeadImg(headEl.getAttribute("src"));
+                        ac = ac.replace("id=", "");
+                        if (ac.indexOf('&') != -1) {
+                            ac = ac.substring(0, ac.indexOf("&"));
+                        }
+                        wbMember.setId(Long.parseLong(ac));
+                        wbMember.setNick(we.getAttribute("title"));
+                        wbMember.setHome(we.getAttribute("href"));
+
+                        String sexClass = fans.findElement(By.cssSelector(".mod_info .info_name a:nth-child(2)")).getAttribute("class");
+                        wbMember.setSex(sexClass.contains("icon_female") ? "female" : "male");
+
+                        WebElement de_addr = fans.findElement(By.cssSelector(".mod_info .info_add span"));
+                        wbMember.setAddr(de_addr.getText());
+                        wbMember.setTagIds("");
+                        wbMember.setvTagIds("");
+
+                        try {
+                            WebElement de_card = fans.findElement(By.cssSelector(".mod_info .info_intro span"));
+                            wbMember.setCard(de_card.getText());
+                        } catch (Throwable ignore) {
+                            wbMember.setCard("");
+                        }
+                        WebElement fansEl = fans.findElement(By.cssSelector(".mod_info .info_connect span:nth-child(2) em a"));
+                        String fansText = fansEl.getText();
+                        if (fansText.endsWith("万")) {
+                            wbMember.setFansNum(Integer.parseInt(fansText.replace("万", "")) * 10000);
+                        } else {
+                            wbMember.setFansNum(Integer.parseInt(fansText));
+                        }
+                        wbMember.setBigV(wbMember.getFansNum() > 10000);
+                        context.getWbMembers().add(wbMember);
+                        //沉淀粉丝结束
+
                         WebElement e = fans.findElement(By.cssSelector(".opt_box a[action-type=opt_box_more]"));
                         ActionUtil.moveToEl(driver, e);
                         ThreadUtil.sleepSeconds(1);
@@ -431,7 +450,9 @@ public class MarketController extends BaseController implements Initializable {
                         System.out.println(wechatEl.getText());
                         WebElement input = driver.findElement(By.cssSelector(".webim_chat_window .sendbox_area .W_input"));
                         input.sendKeys(txtContent.getText());
+                        ThreadUtil.sleep(100);
                         input.sendKeys(Keys.ENTER);
+                        ThreadUtil.sleep(100);
                         break;
                     } catch (Exception nve) {
                         ThreadUtil.sleepSeconds(1);
@@ -447,23 +468,24 @@ public class MarketController extends BaseController implements Initializable {
                 }
                 ThreadUtil.sleepSeconds(1);
                 ActionUtil.click(driver, ".webim_chat_window .chat_head .W_ficon.ficon_close");
-                if (cnt % 5 == 0) {
-                    singleLock.unlock();
-                    ThreadUtil.sleepSeconds(15);
-                    singleLock.lock();
+                if (context.getCounter() % 5 == 0 || context.getCounter() == context.getLimitNum()) {
+                    return;
                 } else {
                     ThreadUtil.sleepSeconds(RandomUtil.randomInt(5));
                 }
             }
-            if (page >= 5) {
+            context.incrPage();
+            if (context.getPage() > 5) {
+                context.setNext(true);
                 break;
             }
             WebElement next = driver.findElement(By.cssSelector(".W_pages .next"));
             if (!next.getAttribute("class").contains("page_dis")) {
                 ActionUtil.moveToEl(driver, next);
                 next.click();
-                waitPage(driver, ++page);
+                waitPage(driver, context.getPage());
             } else {
+                context.setNext(true);
                 break;
             }
         }
@@ -486,30 +508,29 @@ public class MarketController extends BaseController implements Initializable {
     /**
      * 抓取我的微博下评论的粉丝
      *
-     * @param driver
+     * @param context
      */
-    private void sendSmsToCommentFans(WebDriver driver, Set<String> ids) {
+    private void sendSmsToCommentFans(TaskContext context) {
+        WebDriver driver = context.getDriver();
         JavascriptExecutor je = (JavascriptExecutor) driver;
+        context.setNext(false);
         try {
-            int total = 0;
-            int cnt = 0;
             while (true) {
                 List<WebElement> list;
                 ThreadUtil.sleepSeconds(2);
                 int mnt = 0;
                 while (true) {
                     mnt++;
-                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + total + ")"));
+                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + context.getCounter() + ")"));
                     if (list.size() > 0 || mnt > 3) break;
                     ThreadUtil.sleep(500);
                 }
-                total += list.size();
                 for (WebElement comment : list) {
                     WebElement face = comment.findElement(By.cssSelector(".WB_text a"));
-                    if (!ids.add(face.getAttribute("usercard"))) {
-                        break;
+                    if (!context.getSet().add(face.getAttribute("usercard"))) {
+                        continue;
                     }
-                    cnt++;
+                    context.incrCounter();
                     String href = face.getAttribute("href");
                     if (!driver.getCurrentUrl().startsWith(href)) {
                         while (true) {
@@ -525,7 +546,9 @@ public class MarketController extends BaseController implements Initializable {
                                 System.out.println(wechatEl.getText());
                                 WebElement input = driver.findElement(By.cssSelector(".webim_chat_window .sendbox_area .W_input"));
                                 input.sendKeys(txtContent.getText());
+                                ThreadUtil.sleep(100);
                                 input.sendKeys(Keys.ENTER);
+                                ThreadUtil.sleep(100);
                                 ActionUtil.moveToEl(driver, face);
                                 break;
                             } catch (Exception e) {
@@ -543,10 +566,8 @@ public class MarketController extends BaseController implements Initializable {
                         ThreadUtil.sleepSeconds(1);
                         ActionUtil.click(driver, ".webim_chat_window .chat_head .W_ficon.ficon_close");
                     }
-                    if (cnt % 5 == 0) {
-                        singleLock.unlock();
-                        ThreadUtil.sleepSeconds(15);
-                        singleLock.lock();
+                    if (context.getCounter() % 5 == 0 || context.getCounter() == context.getLimitNum()) {
+                        return;
                     } else {
                         ThreadUtil.sleepSeconds(RandomUtil.randomInt(5));
                     }
@@ -556,7 +577,7 @@ public class MarketController extends BaseController implements Initializable {
                     WebElement next = driver.findElement(By.cssSelector("a[action-type='click_more_comment']"));
                     next.click();
                 } catch (Exception e) {
-                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + total + ")"));
+                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + (context.getCounter() + 1) + ")"));
                     if (list.size() == 0) {
                         break;
                     }

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ChromeBrowserService implements DisposableBean, InitializingBean {
@@ -140,22 +141,23 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
             } while (true);
             Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
             driver.manage().window().setSize(new org.openqa.selenium.Dimension(screensize.width, screensize.height));
+            driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
             logger.debug("login weibo end");
-
-
         }
 
         return driver;
     }
 
-    private void loginWb(WbAccount account, WebDriver driver) {
+    public void loginWb(WbAccount account, WebDriver driver) {
         int loginCnt = 0;
         do {
             logger.debug("login weibo ...");
             loginCnt++;
             try {
                 WebElement loginname = driver.findElement(By.id("loginname"));
+                loginname.clear();
                 WebElement password = driver.findElement(By.name("password"));
+                password.clear();
                 loginname.sendKeys(account.getUsername());
                 password.sendKeys(account.getPassword());
 //                    password.sendKeys(new String(Base64.decode(account.getPassword().getBytes())));
@@ -170,12 +172,12 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
                     } catch (Throwable e) {
                         break;
                     }
-                    if (cnt >= 3) {
+                    if (cnt >= 5) {
                         break;
                     }
                     ThreadUtil.sleepSeconds(1);
                 }
-                if (cnt < 3) {
+                if (cnt < 5) {
                     break;
                 } else {
                     driver.get("https://weibo.com/");

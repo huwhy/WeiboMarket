@@ -3,7 +3,7 @@
 <mapper namespace="cn.huwhy.weibo.robot.dao.SearchResultDao">
 
   <sql id="COLUMNS">
-    id,`member_id`,`type`,`title`,`content`,`url`
+    id,`member_id`,`type`,`title`,`content`,`url`,`created`
   </sql>
   
   <insert id="save" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
@@ -14,15 +14,14 @@
     ) on duplicate key update title=VALUES(title)
   </insert>
   
-  
-  <insert id="saves">
+  <insert id="saves" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
     insert into search_result(
     <include refid="COLUMNS"/>
     ) VALUES
     <foreach collection="list" item="item" index="index"
              separator=",">
       (
-      #{item.id},#{item.memberId},#{item.type.value},#{item.title},#{item.content},#{item.url}
+      #{item.id},#{item.memberId},#{item.type.value},#{item.title},#{item.content},#{item.url},#{item.created}
       )
     </foreach>
     on duplicate key update title=VALUES(title)

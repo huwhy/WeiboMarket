@@ -1,5 +1,7 @@
 package cn.huwhy.weibo.robot.model;
 
+import cn.huwhy.weibo.robot.ui.MyCheckBox;
+
 import java.io.Serializable;
 
 public class WbAccount implements Serializable {
@@ -9,6 +11,8 @@ public class WbAccount implements Serializable {
     private String username;
 
     private String password;
+
+    private MyCheckBox cb = new MyCheckBox();
 
     public WbAccount() {
     }
@@ -49,5 +53,13 @@ public class WbAccount implements Serializable {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public MyCheckBox getCb() {
+        return cb;
+    }
+
+    public void setCb(MyCheckBox cb) {
+        this.cb = cb;
     }
 }
