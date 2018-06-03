@@ -158,9 +158,11 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
                 loginname.clear();
                 WebElement password = driver.findElement(By.name("password"));
                 password.clear();
+                ThreadUtil.sleepSeconds(1);
                 loginname.sendKeys(account.getUsername());
+                ThreadUtil.sleep(500);
                 password.sendKeys(account.getPassword());
-//                    password.sendKeys(new String(Base64.decode(account.getPassword().getBytes())));
+                ThreadUtil.sleep(500);
                 WebElement login_btn = driver.findElement(By.className("login_btn"));
                 login_btn.click();
 

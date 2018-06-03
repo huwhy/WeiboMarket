@@ -41,13 +41,13 @@
           <Font size="14.0"/>
         </font>
       </TextArea>
-      <Label text="每个微博帐户最多只能发送10条私信:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+      <Label text="每个微博帐户最多只能发送10条私信:" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
       <HBox alignment="BOTTOM_RIGHT" spacing="10" GridPane.columnIndex="2" GridPane.rowIndex="6">
         <Button onAction="#btnExecSms" text="发私信"/>
       </HBox>
-      <Label fx:id="lbTip" styleClass="warnTip" GridPane.columnIndex="0" GridPane.columnSpan="5" GridPane.rowIndex="7"/>
+      <Label fx:id="lbTip" styleClass="warnTip" GridPane.columnIndex="2" GridPane.columnSpan="5" GridPane.rowIndex="7"/>
       <ListView fx:id="listView" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="2" GridPane.rowIndex="9"/>
-      <Label fx:id="lbResult" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+      <Label fx:id="lbResult" GridPane.columnIndex="2" GridPane.rowIndex="10"/>
       
       <columnConstraints>
         <ColumnConstraints/>

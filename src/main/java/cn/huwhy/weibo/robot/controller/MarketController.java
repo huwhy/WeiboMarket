@@ -110,72 +110,28 @@ public class MarketController extends BaseController implements Initializable {
         wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), 100);
         int wbNum = AppContext.getMember().getWbNum();
         int groups = wbAccounts.size() / wbNum + 1;
-        List<ActionTask> taskList = new ArrayList<>(groups);
-        List<GroupActionTask> groupActionTasks = new ArrayList<>(groups);
-        int aIndex = 0;
+        List<GroupActionTask> taskList = new ArrayList<>(groups);
         for (int i = 0; i < groups; i++) {
             List<WbAccount> accounts = new ArrayList<>(wbNum);
             for (int j =  wbNum * i; j < wbAccounts.size() && j < wbNum * (i + 1); j++) {
                 accounts.add(wbAccounts.get(j));
             }
-            GroupActionTask task = new GroupActionTask(new TaskGroupContent(accounts)) {
-                @Override
-                public void run() {
-
-                }
-            };
-            groupActionTasks.add(task);
-        }
-        for (WbAccount account : wbAccounts) {
-            WebDriver driver = AppContext.getDriver(account.getUsername());
-            if (driver == null) {
-                driver = MarketController.this.chromeBrowserService.getDriver(account);
-                AppContext.putDriver(account.getUsername(), driver);
-            }
-            ActionTask task = new ActionTask(new TaskContext(account, driver, 10)) {
-                @Override
-                public void run() {
-                    SearchResult result;
-                    if (this.context.isNext()) {
-                        result = queue.poll();
-                        this.context.setResult(result);
-                        if (this.context.getWbMembers().size() > 0) {
-                            fansService.saveWbMembers(AppContext.getMemberId(), this.context.getWbMembers());
-                            this.context.clearWbMembers();
-                        }
-                    } else {
-                        result = context.getResult();
-                    }
-                    if (result != null) {
-                        if (this.context.isNext()) {
-                            this.context.getDriver().get(result.getUrl());
-                        }
-                        if (result.getType().equals(SearchType.找人)) {
-                            execSendSmsToFollow(this.context);
-                        } else {
-                            sendSmsToCommentFans(this.context);
-                        }
-                        if (this.context.getCounter() == this.context.getLimitNum()) {
-                            this.context.setFinished(true);
-                        }
-                        ThreadUtil.sleepSeconds(15);
-                    } else {
-                        this.context.setFinished(true);
-                    }
-                }
-            };
+            TaskGroupContent context = new TaskGroupContent(accounts);
+            context.setMsg(txtContent.getText());
+            GroupActionTask task = new GroupActionTask(context, queue, chromeBrowserService, fansService);
             taskList.add(task);
         }
+
         int cnt = taskList.size();
         int totalSendNum = 0;
         while (true) {
             int finished = 0;
-            for (ActionTask task : taskList) {
+            for (GroupActionTask task : taskList) {
                 if (!task.getContext().isFinished()) {
                     task.run();
                     if (task.getContext().isFinished()) {
                         finished++;
-                        totalSendNum += task.getContext().getCounter();
+                        totalSendNum += task.getContext().getTotalCnt();
                     }
                 }
             }
@@ -361,144 +317,10 @@ public class MarketController extends BaseController implements Initializable {
 
     public void setSearchResults(List<SearchResult> searchResults) {
         if (CollectionUtil.isNotEmpty(searchResults)) {
+            queue.clear();
             queue.addAll(searchResults);
             ObservableList<String> items = FXCollections.observableArrayList(Collections2.transform(searchResults, SearchResult::getUrl));
             listView.setItems(items);
-        }
-    }
-
-    /**
-     * 对粉丝列表发私信(只能抓取前5页大概100条数据)
-     *
-     * @param context
-     */
-    private void execSendSmsToFollow(TaskContext context) {
-        WebDriver driver = context.getDriver();
-        JavascriptExecutor je = (JavascriptExecutor) driver;
-        if (context.isNext()) {
-            try {
-                WebElement counterEL = driver.findElement(By.cssSelector(".PCD_counter"));
-                List<WebElement> counterList = counterEL.findElements(By.cssSelector(".S_line1"));
-                try {
-                    String link = counterList.get(1).findElement(By.cssSelector(".t_link")).getAttribute("href");
-                    if (context.getPage() == 1) {
-                        driver.get(link);
-                    } else {
-                        String url = link.substring(0, link.indexOf('?')) + "page=" + context.getPage() + "&" + link.substring(link.indexOf('?') + 1);
-                        driver.get(url);
-                    }
-                } catch (Throwable err) {
-                    return;
-                }
-            } catch (NoSuchElementException err) {
-                driver.navigate().refresh();
-            }
-        }
-        context.setNext(false);
-        while (true) {
-            List<WebElement> fansList = driver.findElements(By.cssSelector(".follow_box .follow_list .follow_item:nth-child(n+" + context.getCnter() + ")"));
-            if (fansList.size() == 0) {
-                break;
-            }
-            ThreadUtil.sleepSeconds(1);
-            for (WebElement fans : fansList) {
-                WebElement headEl = fans.findElement(By.cssSelector(".mod_pic a img"));
-                String ac = headEl.getAttribute("usercard");
-                if (!context.getSet().add(ac)) {
-                    continue;
-                }
-                context.incrCounter();
-                while (true) {
-                    try {
-                        //沉淀粉丝
-                        WbMember wbMember = new WbMember();
-                        WebElement we = fans.findElement(By.cssSelector(".mod_pic a"));
-                        wbMember.setHeadImg(headEl.getAttribute("src"));
-                        ac = ac.replace("id=", "");
-                        if (ac.indexOf('&') != -1) {
-                            ac = ac.substring(0, ac.indexOf("&"));
-                        }
-                        wbMember.setId(Long.parseLong(ac));
-                        wbMember.setNick(we.getAttribute("title"));
-                        wbMember.setHome(we.getAttribute("href"));
-
-                        String sexClass = fans.findElement(By.cssSelector(".mod_info .info_name a:nth-child(2)")).getAttribute("class");
-                        wbMember.setSex(sexClass.contains("icon_female") ? "female" : "male");
-
-                        WebElement de_addr = fans.findElement(By.cssSelector(".mod_info .info_add span"));
-                        wbMember.setAddr(de_addr.getText());
-                        wbMember.setTagIds("");
-                        wbMember.setvTagIds("");
-
-                        try {
-                            WebElement de_card = fans.findElement(By.cssSelector(".mod_info .info_intro span"));
-                            wbMember.setCard(de_card.getText());
-                        } catch (Throwable ignore) {
-                            wbMember.setCard("");
-                        }
-                        WebElement fansEl = fans.findElement(By.cssSelector(".mod_info .info_connect span:nth-child(2) em a"));
-                        String fansText = fansEl.getText();
-                        if (fansText.endsWith("万")) {
-                            wbMember.setFansNum(Integer.parseInt(fansText.replace("万", "")) * 10000);
-                        } else {
-                            wbMember.setFansNum(Integer.parseInt(fansText));
-                        }
-                        wbMember.setBigV(wbMember.getFansNum() > 10000);
-                        context.getWbMembers().add(wbMember);
-                        //沉淀粉丝结束
-
-                        WebElement e = fans.findElement(By.cssSelector(".opt_box a[action-type=opt_box_more]"));
-                        ActionUtil.moveToEl(driver, e);
-                        ThreadUtil.sleepSeconds(1);
-                        WebElement el2 = fans.findElement(By.cssSelector(".layer_menu_list a[action-type='webim.conversation']"));
-                        je.executeScript("arguments[0].scrollIntoView(false);", el2);
-                        ActionUtil.moveToEl(driver, el2);
-                        el2.click();
-                        ThreadUtil.sleepSeconds(1);
-                        WebElement wechatEl = driver.findElement(By.cssSelector(".webim_chat_window .chat_head .chat_title a[node-type=_chatUserName]"));
-                        ActionUtil.moveToEl(driver, wechatEl);
-                        ThreadUtil.sleepSeconds(2);
-                        System.out.println(wechatEl.getText());
-                        WebElement input = driver.findElement(By.cssSelector(".webim_chat_window .sendbox_area .W_input"));
-                        input.sendKeys(txtContent.getText());
-                        ThreadUtil.sleep(100);
-                        input.sendKeys(Keys.ENTER);
-                        ThreadUtil.sleep(100);
-                        break;
-                    } catch (Exception nve) {
-                        ThreadUtil.sleepSeconds(1);
-                    }
-                }
-                while (true) {
-                    try {
-                        WebElement w = driver.findElement(By.cssSelector(".yzm_input"));
-                        ThreadUtil.sleepSeconds(3);
-                    } catch (Throwable thr) {
-                        break;
-                    }
-                }
-                ThreadUtil.sleepSeconds(1);
-                ActionUtil.click(driver, ".webim_chat_window .chat_head .W_ficon.ficon_close");
-                if (context.getCounter() % 5 == 0 || context.getCounter() == context.getLimitNum()) {
-                    return;
-                } else {
-                    ThreadUtil.sleepSeconds(RandomUtil.randomInt(5));
-                }
-            }
-            context.incrPage();
-            if (context.getPage() > 5) {
-                context.setNext(true);
-                break;
-            }
-            WebElement next = driver.findElement(By.cssSelector(".W_pages .next"));
-            if (!next.getAttribute("class").contains("page_dis")) {
-                ActionUtil.moveToEl(driver, next);
-                next.click();
-                waitPage(driver, context.getPage());
-            } else {
-                context.setNext(true);
-                break;
-            }
         }
     }
 
@@ -514,89 +336,6 @@ public class MarketController extends BaseController implements Initializable {
                 ThreadUtil.sleep(500);
             }
         } while (true);
-    }
-
-    /**
-     * 抓取我的微博下评论的粉丝
-     *
-     * @param context
-     */
-    private void sendSmsToCommentFans(TaskContext context) {
-        WebDriver driver = context.getDriver();
-        JavascriptExecutor je = (JavascriptExecutor) driver;
-        context.setNext(false);
-        try {
-            while (true) {
-                List<WebElement> list;
-                ThreadUtil.sleepSeconds(2);
-                int mnt = 0;
-                while (true) {
-                    mnt++;
-                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + context.getCounter() + ")"));
-                    if (list.size() > 0 || mnt > 3) break;
-                    ThreadUtil.sleep(500);
-                }
-                for (WebElement comment : list) {
-                    WebElement face = comment.findElement(By.cssSelector(".WB_text a"));
-                    if (!context.getSet().add(face.getAttribute("usercard"))) {
-                        continue;
-                    }
-                    context.incrCounter();
-                    String href = face.getAttribute("href");
-                    if (!driver.getCurrentUrl().startsWith(href)) {
-                        while (true) {
-                            try {
-                                je.executeScript("arguments[0].scrollIntoView(false);", face);
-                                ActionUtil.moveToEl(driver, face);
-                                ThreadUtil.sleep(500);
-                                WebElement fcEl = driver.findElement(By.cssSelector(".W_layer_pop .layer_personcard .c_btnbox a:nth-child(3)"));
-                                fcEl.click();
-                                WebElement wechatEl = driver.findElement(By.cssSelector(".webim_chat_window .chat_head .chat_title a[node-type=_chatUserName]"));
-                                ActionUtil.moveToEl(driver, wechatEl);
-                                ThreadUtil.sleepSeconds(2);
-                                System.out.println(wechatEl.getText());
-                                WebElement input = driver.findElement(By.cssSelector(".webim_chat_window .sendbox_area .W_input"));
-                                input.sendKeys(txtContent.getText());
-                                ThreadUtil.sleep(100);
-                                input.sendKeys(Keys.ENTER);
-                                ThreadUtil.sleep(100);
-                                ActionUtil.moveToEl(driver, face);
-                                break;
-                            } catch (Exception e) {
-                                ThreadUtil.sleep(500);
-                            }
-                        }
-                        while (true) {
-                            try {
-                                WebElement w = driver.findElement(By.cssSelector(".yzm_input"));
-                                ThreadUtil.sleepSeconds(3);
-                            } catch (Throwable thr) {
-                                break;
-                            }
-                        }
-                        ThreadUtil.sleepSeconds(1);
-                        ActionUtil.click(driver, ".webim_chat_window .chat_head .W_ficon.ficon_close");
-                    }
-                    if (context.getCounter() % 5 == 0 || context.getCounter() == context.getLimitNum()) {
-                        return;
-                    } else {
-                        ThreadUtil.sleepSeconds(RandomUtil.randomInt(5));
-                    }
-                }
-
-                try {
-                    WebElement next = driver.findElement(By.cssSelector("a[action-type='click_more_comment']"));
-                    next.click();
-                } catch (Exception e) {
-                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + (context.getCounter() + 1) + ")"));
-                    if (list.size() == 0) {
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private WebDriver getDriver() {

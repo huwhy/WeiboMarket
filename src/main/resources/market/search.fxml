@@ -93,7 +93,6 @@
       <Label fx:id="lbTotal" text="总记录数"/>
       <Button text="全选" onAction="#selectAll"/>
       <Button text="处理选中记录" onAction="#dealSelected"/>
-      <Button text="test" onAction="#test"/>
     </FlowPane>
   </bottom>
   <stylesheets>

@@ -288,25 +288,6 @@ public class SearchController extends BaseController implements Initializable {
         AppContext.getMarketController().setSearchResults(results);
     }
 
-    public void test() {
-        List<WbAccount> wbAccounts = wbAccountService.getByMemberId(AppContext.getMemberId(), 10);
-        for (WbAccount account : wbAccounts) {
-            if (driver == null) {
-                driver = chromeBrowserService.getDriver(account);
-            } else {
-                if (driver.findElements(By.className("login_btn")).size() == 0) {
-                    WebElement element = driver.findElement(By.cssSelector(".gn_position a[node-type=account]"));
-                    ActionUtil.moveToEl(driver, element);
-                    ThreadUtil.sleepSeconds(2);
-                    WebElement quitElement = driver.findElement(By.cssSelector("a[suda-data='key=account_setup&value=quit']"));
-                    quitElement.click();
-                }
-                chromeBrowserService.loginWb(account, driver);
-            }
-            ThreadUtil.sleepSeconds(5);
-        }
-    }
-
     public void refresh() {
     }
 
