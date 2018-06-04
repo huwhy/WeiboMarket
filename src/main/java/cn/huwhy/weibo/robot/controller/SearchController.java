@@ -207,11 +207,15 @@ public class SearchController extends BaseController implements Initializable {
                         List<WbMember> vs = new ArrayList<>(totalPage * 20);
                         while (true) {
                             List<WebElement> elements;
+                            int cnt = 0;
                             do {
-                                //TODO: 搜索结果为空 会出现死循环
+                                cnt++;
+                                if (cnt % 3 == 0) {
+                                    driver.navigate().refresh();
+                                }
                                 ThreadUtil.sleep(500);
                                 elements = driver.findElements(By.cssSelector(".pl_personlist .list_person"));
-                            } while (elements.isEmpty());
+                            } while (elements.isEmpty() && cnt < 10);
                             List<WbMember> wbMembers = new ArrayList<>(elements.size());
                             for (WebElement element : elements) {
                                 SearchResult result = new SearchResult();
