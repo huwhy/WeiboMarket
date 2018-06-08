@@ -2,7 +2,6 @@ package cn.huwhy.weibo.robot.controller;
 
 import cn.huwhy.common.util.CollectionUtil;
 import cn.huwhy.common.util.DateUtil;
-import cn.huwhy.common.util.RandomUtil;
 import cn.huwhy.common.util.StringUtil;
 import cn.huwhy.common.util.ThreadUtil;
 import cn.huwhy.weibo.robot.AppContext;
@@ -12,13 +11,10 @@ import cn.huwhy.weibo.robot.model.Tag;
 import cn.huwhy.weibo.robot.model.Task;
 import cn.huwhy.weibo.robot.model.WbAccount;
 import cn.huwhy.weibo.robot.model.WbMember;
-import cn.huwhy.weibo.robot.model.common.SearchType;
 import cn.huwhy.weibo.robot.service.ChromeBrowserService;
 import cn.huwhy.weibo.robot.service.FansService;
 import cn.huwhy.weibo.robot.service.WbAccountService;
-import cn.huwhy.weibo.robot.task.ActionTask;
 import cn.huwhy.weibo.robot.task.GroupActionTask;
-import cn.huwhy.weibo.robot.task.TaskContext;
 import cn.huwhy.weibo.robot.task.TaskGroupContent;
 import cn.huwhy.weibo.robot.util.SpringContentUtil;
 import com.google.common.collect.Collections2;
@@ -32,11 +28,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -112,13 +106,18 @@ public class MarketController extends BaseController implements Initializable {
         int groups = wbAccounts.size() / wbNum + 1;
         List<GroupActionTask> taskList = new ArrayList<>(groups);
         for (int i = 0; i < groups; i++) {
+            WebDriver driver = AppContext.getDriver(i);
+            if (driver == null) {
+                driver = chromeBrowserService.newDriver();
+                AppContext.addDriver(driver);
+            }
             List<WbAccount> accounts = new ArrayList<>(wbNum);
             for (int j =  wbNum * i; j < wbAccounts.size() && j < wbNum * (i + 1); j++) {
                 accounts.add(wbAccounts.get(j));
             }
-            TaskGroupContent context = new TaskGroupContent(accounts);
+            TaskGroupContent context = new TaskGroupContent(driver, accounts);
             context.setMsg(txtContent.getText());
-            GroupActionTask task = new GroupActionTask(context, queue, chromeBrowserService, fansService);
+            GroupActionTask task = new GroupActionTask(context, queue, chromeBrowserService, wbAccountService, fansService);
             taskList.add(task);
         }
 
@@ -315,7 +314,7 @@ public class MarketController extends BaseController implements Initializable {
         }
     }
 
-    public void setSearchResults(List<SearchResult> searchResults) {
+    void setSearchResults(List<SearchResult> searchResults) {
         if (CollectionUtil.isNotEmpty(searchResults)) {
             queue.clear();
             queue.addAll(searchResults);

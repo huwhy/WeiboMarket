@@ -32,46 +32,15 @@ public class MainController extends BaseController implements Initializable {
     @FXML
     private TabPane tabPane;
     @FXML
-    private Tab tabWb, tabWords, tabTask, tabSearch, tabMarket, tabFans, tabData, tabMy;
+    private Tab tabWb, tabWords, tabTask, tabSearch, tabMarket, tabMyFans, tabFans, tabData, tabMy;
     private MemberService memberService;
 
-    public void refreshCode() {
-//        code = RandomUtil.getRandomNum(4);
-//        lbCode.setText("验证码 " + code + " 刷新");
-    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        refreshCode();
-//        tabPane.getTabs().removeAll(tabWords, tabTask, tabSearch, tabMarket, tabFans, tabData, tabMy);
         memberService = SpringContentUtil.getBean(MemberService.class);
         AppContext.setMainController(this);
         initTabs();
-    }
-
-    @FXML
-    public void btnLoginClick() {
-        if (StringUtil.isEmpty(txWbName.getText()) || StringUtil.isEmpty(txWbPwd.getText())) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "");
-            alert.setTitle("提示");
-            alert.setHeaderText("微博登录帐号错误");
-            alert.showAndWait();
-        } else if (txCode.getText().equals(this.code)) {
-            if (StringUtil.isNotEmpty(txWbName.getText()) || StringUtil.isNotEmpty(txWbPwd.getText())) {
-                Member member = AppContext.getMember();
-                member.setWbName(txWbName.getText());
-                String wbPassword = new String(Base64.encode(txWbPwd.getText().getBytes()));
-                if (StringUtil.isNotEmpty(txWbPwd.getText()) && !member.getWbPassword().equals(wbPassword)) {
-                    member.setWbPassword(wbPassword);
-                    memberService.save(member);
-                }
-            }
-        } else {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "");
-            alert.setTitle("提示");
-            alert.setHeaderText("验证码错误");
-            alert.showAndWait();
-        }
     }
 
     private void initTabs() {
@@ -82,6 +51,10 @@ public class MainController extends BaseController implements Initializable {
         if (tabWords.getContent() == null) {
             Parent parent = AppContext.loadFxml("word/list.fxml");
             tabWords.setContent(parent);
+        }
+        if (tabMyFans.getContent() == null) {
+            Parent parent = AppContext.loadFxml("fans/my_fans.fxml");
+            tabMyFans.setContent(parent);
         }
         if (tabFans.getContent() == null) {
             Parent parent = AppContext.loadFxml("fans/list.fxml");

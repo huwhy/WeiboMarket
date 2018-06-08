@@ -1,6 +1,7 @@
 package cn.huwhy.weibo.robot.model;
 
 import java.io.Serializable;
+import java.util.Date;
 
 public class Member implements Serializable {
     private int id;
@@ -13,6 +14,8 @@ public class Member implements Serializable {
     private int blackCommentNum;
     private long lastCommentId;
     private int wbNum;
+    private Date endTime;
+    private Date creatd;
 
     public Member() {
     }
@@ -110,5 +113,21 @@ public class Member implements Serializable {
 
     public void setConfig(MemberConfig config) {
         this.config = config;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public Date getCreatd() {
+        return creatd;
+    }
+
+    public void setCreatd(Date creatd) {
+        this.creatd = creatd;
     }
 }

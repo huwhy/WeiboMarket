@@ -4,19 +4,17 @@ import cn.huwhy.weibo.robot.controller.BaseController;
 import cn.huwhy.weibo.robot.controller.MainController;
 import cn.huwhy.weibo.robot.controller.MarketController;
 import cn.huwhy.weibo.robot.model.Member;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import org.openqa.selenium.WebDriver;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class AppContext implements Serializable {
     private static final AppContext ctx = new AppContext();
@@ -29,7 +27,7 @@ public final class AppContext implements Serializable {
     private volatile boolean isAutoTask;
     private MainController mainController;
     private MarketController marketController;
-    private Map<String, WebDriver> driverMap = new HashMap<>();
+    private List<WebDriver> drivers = new ArrayList<>();
 
     public static void setMainController(MainController mainController) {
         ctx.mainController = mainController;
@@ -39,12 +37,12 @@ public final class AppContext implements Serializable {
         ctx.marketController = marketController;
     }
 
-    public static void putDriver(String username, WebDriver driver) {
-        ctx.driverMap.put(username, driver);
+    public static void addDriver(WebDriver driver) {
+        ctx.drivers.add(driver);
     }
 
-    public static WebDriver getDriver(String username) {
-        return ctx.driverMap.get(username);
+    public static WebDriver getDriver(int index) {
+        return index < ctx.drivers.size() ? ctx.drivers.get(index) : null;
     }
 
     public static MarketController getMarketController() {

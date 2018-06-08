@@ -5,6 +5,7 @@ import cn.huwhy.weibo.robot.dao.FansDao;
 import cn.huwhy.weibo.robot.dao.MemberDao;
 import cn.huwhy.weibo.robot.dao.TagDao;
 import cn.huwhy.weibo.robot.dao.WbMemberDao;
+import cn.huwhy.weibo.robot.model.FansDto;
 import cn.huwhy.weibo.robot.model.FansTerm;
 import cn.huwhy.weibo.robot.model.Tag;
 import cn.huwhy.weibo.robot.model.WbMember;
@@ -45,5 +46,10 @@ public class FansService {
     public Paging<String> findFansHomeList(FansTerm term) {
         List<String> homeList = fansDao.findFansPaging(term);
         return new Paging<>(term, homeList);
+    }
+
+    public Paging<FansDto> findFans(FansTerm term) {
+        List<FansDto> list = fansDao.findMyFansPaging(term);
+        return new Paging<>(term, list);
     }
 }

@@ -116,6 +116,16 @@ public class ChromeBrowserService implements DisposableBean, InitializingBean {
 
     private static String uri = "https://weibo.com/comment/inbox?topnav=1&wvr=6&f=1";
 
+    public WebDriver newDriver() {
+        ChromeOptions chromeOptions = new ChromeOptions();
+        WebDriver driver = new RemoteWebDriver(service.getUrl(),
+                DesiredCapabilities.chrome().merge(chromeOptions));
+        Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
+        driver.manage().window().setSize(new org.openqa.selenium.Dimension(screensize.width, screensize.height));
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        return driver;
+    }
+
     public WebDriver getDriver(WbAccount account) {
         ChromeOptions chromeOptions = new ChromeOptions();
         WebDriver driver = new RemoteWebDriver(service.getUrl(),

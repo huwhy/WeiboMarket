@@ -157,10 +157,10 @@ public class SearchController extends BaseController implements Initializable {
             word = encode(word, "UTF-8");
             final String key = word;
             if (SearchController.this.driver == null) {
-                driver = AppContext.getDriver(wbAccount.getUsername());
+                driver = AppContext.getDriver(0);
                 if (driver == null) {
                     driver = SearchController.this.chromeBrowserService.getDriver(wbAccount);
-                    AppContext.putDriver(wbAccount.getUsername(), driver);
+                    AppContext.addDriver(driver);
                 }
             }
             TaskContext context = new TaskContext(wbAccount, driver, 10);

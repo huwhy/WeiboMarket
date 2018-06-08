@@ -3,15 +3,16 @@
 <mapper namespace="cn.huwhy.weibo.robot.dao.WbAccountDao">
   
   <sql id="COLUMNS">
-    id,`member_id`,`username`,`password`
+    id,`member_id`,`username`,`password`,`enable`,`msg_limit`,`last_send_time`
   </sql>
   
   <insert id="save">
     insert into wb_account(
     <include refid="COLUMNS"/>
     ) VALUES (
-    #{id},#{memberId},#{username},#{password}
-    ) on duplicate key update username=VALUES(username),password=VALUES(password)
+    #{id},#{memberId},#{username},#{password},#{enable},#{msgLimit},#{lastSendTime}
+    ) on duplicate key update username=VALUES(username),password=VALUES(password),
+    enable=values(enable),msg_limit=values(msg_limit),last_send_time=values(last_send_time)
   </insert>
   
   <delete id="delete">
@@ -28,7 +29,7 @@
   <select id="get" resultType="WbAccount" parameterType="Integer">
     select
     <include refid="COLUMNS"/>
-    from wb_account where `id`=#{id}
+    from wb_account where `id`=#{id} and enable = 1
     limit 1
   </select>
   

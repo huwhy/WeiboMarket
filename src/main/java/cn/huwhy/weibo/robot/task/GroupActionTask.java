@@ -10,9 +10,11 @@ import cn.huwhy.weibo.robot.model.WbMember;
 import cn.huwhy.weibo.robot.model.common.SearchType;
 import cn.huwhy.weibo.robot.service.ChromeBrowserService;
 import cn.huwhy.weibo.robot.service.FansService;
+import cn.huwhy.weibo.robot.service.WbAccountService;
 import org.openqa.selenium.*;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -22,6 +24,7 @@ public class GroupActionTask implements Serializable {
     private ArrayBlockingQueue<SearchResult> queue;
     private ChromeBrowserService chromeBrowserService;
     private FansService fansService;
+    private WbAccountService accountService;
     private boolean finished;
     private boolean nextAccount = true;
     private boolean nextResult = true;
@@ -29,20 +32,19 @@ public class GroupActionTask implements Serializable {
     public GroupActionTask(TaskGroupContent context,
                            ArrayBlockingQueue<SearchResult> queue,
                            ChromeBrowserService chromeBrowserService,
+                           WbAccountService accountService,
                            FansService fansService) {
         this.context = context;
         this.queue = queue;
         this.chromeBrowserService = chromeBrowserService;
         this.fansService = fansService;
+        this.accountService = accountService;
     }
 
     public void run() {
-        if (context.getDriver() == null) {
-            WebDriver driver = chromeBrowserService.getDriver(context.nextAccount());
-            context.setNextAccount(false);
-            context.setDriver(driver);
-        } else if (context.isNextAccount()) {
-            WbAccount account = context.nextAccount();
+        WbAccount account;
+        if (context.isNextAccount()) {
+            account = context.nextAccount();
             if (account == null) {
                 context.setFinished(true);
                 return;
@@ -57,9 +59,12 @@ public class GroupActionTask implements Serializable {
                     quitElement.click();
                     ThreadUtil.sleepSeconds(2);
                 }
-                chromeBrowserService.loginWb(account, context.getDriver());
             } catch (Exception ignore) {
+                context.getDriver().get("https://weibo.com/");
             }
+            chromeBrowserService.loginWb(account, context.getDriver());
+        } else {
+            account = context.currentAccount();
         }
         SearchResult result;
         if (context.isNextResult()) {
@@ -76,12 +81,14 @@ public class GroupActionTask implements Serializable {
             context.getDriver().get(result.getUrl());
         }
         if (result.getType().equals(SearchType.找人)) {
-            execSendSmsToFollow(context);
+            execSendSmsToFollow(context, account);
         } else {
-            sendSmsToCommentFans(context);
+            sendSmsToCommentFans(context, account);
         }
 
-        if (context.getAccontCounter() == context.getLimitNum()) {
+        if (context.getAccountCounter() == account.getMsgLimit()) {
+            account.setLastSendTime(new Date());
+            accountService.save(account);
             context.setNextAccount(true);
         }
         ThreadUtil.sleepSeconds(10);
@@ -97,7 +104,7 @@ public class GroupActionTask implements Serializable {
      *
      * @param context 上下文
      */
-    private void execSendSmsToFollow(TaskGroupContent context) {
+    private void execSendSmsToFollow(TaskGroupContent context, WbAccount account) {
         WebDriver driver = context.getDriver();
         JavascriptExecutor je = (JavascriptExecutor) driver;
         if (context.isNextResult() || context.isNextAccount()) {
@@ -113,17 +120,21 @@ public class GroupActionTask implements Serializable {
                         driver.get(url);
                     }
                 } catch (Throwable err) {
-                    return;
+                    String url = context.getResult().getUrl();
+                    String link = url.substring(0, url.indexOf('?')) + "/fans";
+                    driver.get(link);
                 }
             } catch (NoSuchElementException err) {
                 driver.navigate().refresh();
+            } finally {
+                context.setNextAccount(false);
             }
         }
         context.setNextResult(false);
-        context.setNextAccount(false);
         while (true) {
-            List<WebElement> fansList = driver.findElements(By.cssSelector(".follow_box .follow_list .follow_item:nth-child(n+" + context.getResutlCounter() + ")"));
-            if (fansList.size() == 0) {
+            List<WebElement> fansList = driver.findElements(By.cssSelector(".follow_box .follow_list .follow_item:nth-child(n+" + context.getResultCounter() + ")"));
+                if (fansList.size() == 0) {
+                context.setNextResult(true);
                 break;
             }
             ThreadUtil.sleepSeconds(1);
@@ -196,17 +207,14 @@ public class GroupActionTask implements Serializable {
                         ThreadUtil.sleepSeconds(1);
                     }
                 }
-                while (true) {
-                    try {
-                        driver.findElement(By.cssSelector(".yzm_input"));
-                        ThreadUtil.sleepSeconds(3);
-                    } catch (Throwable thr) {
-                        break;
-                    }
-                }
+                List<WebElement> yzmList = driver.findElements(By.cssSelector(".yzm_input"));
                 ThreadUtil.sleepSeconds(1);
+                if (yzmList.size() > 0) {
+                    account.setMsgLimit(context.getAccountCounter());
+                    return;
+                }
                 ActionUtil.click(driver, ".webim_chat_window .chat_head .W_ficon.ficon_close");
-                if (context.getAccontCounter() % 5 == 0 || context.getAccontCounter() == context.getLimitNum()) {
+                if (context.getAccountCounter() % 5 == 0 || context.getAccountCounter() == account.getMsgLimit()) {
                     return;
                 } else {
                     ThreadUtil.sleepSeconds(RandomUtil.randomInt(5));
@@ -248,7 +256,7 @@ public class GroupActionTask implements Serializable {
      *
      * @param context 上下文
      */
-    private void sendSmsToCommentFans(TaskGroupContent context) {
+    private void sendSmsToCommentFans(TaskGroupContent context, WbAccount account) {
         WebDriver driver = context.getDriver();
         JavascriptExecutor je = (JavascriptExecutor) driver;
         context.setNextResult(false);
@@ -259,7 +267,7 @@ public class GroupActionTask implements Serializable {
                 int mnt = 0;
                 while (true) {
                     mnt++;
-                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + context.getResutlCounter() + ")"));
+                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + context.getResultCounter() + ")"));
                     if (list.size() > 0 || mnt > 3) break;
                     ThreadUtil.sleep(500);
                 }
@@ -304,7 +312,7 @@ public class GroupActionTask implements Serializable {
                         ThreadUtil.sleepSeconds(1);
                         ActionUtil.click(driver, ".webim_chat_window .chat_head .W_ficon.ficon_close");
                     }
-                    if (context.getAccontCounter() % 5 == 0 || context.getAccontCounter() == context.getLimitNum()) {
+                    if (context.getAccountCounter() % 5 == 0 || context.getAccountCounter() == account.getMsgLimit()) {
                         return;
                     } else {
                         ThreadUtil.sleepSeconds(RandomUtil.randomInt(5));
@@ -315,7 +323,7 @@ public class GroupActionTask implements Serializable {
                     WebElement next = driver.findElement(By.cssSelector("a[action-type='click_more_comment']"));
                     next.click();
                 } catch (Exception e) {
-                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + (context.getResutlCounter() + 1) + ")"));
+                    list = driver.findElements(By.cssSelector(".repeat_list .list_ul .list_li:nth-child(n+" + (context.getResultCounter() + 1) + ")"));
                     if (list.size() == 0) {
                         break;
                     }

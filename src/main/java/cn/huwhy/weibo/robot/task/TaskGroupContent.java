@@ -24,15 +24,15 @@ public class TaskGroupContent implements Serializable {
     //总计数
     private int totalCnt;
     //本个result计数
-    private int resutlCounter;
+    private int resultCounter;
     //帐号发送计数
-    private int accontCounter;
-    private int limitNum = 10;
+    private int accountCounter;
     private int page = 1;
     private String msg;
     private List<WbMember> wbMembers = new ArrayList<>();
 
-    public TaskGroupContent(List<WbAccount> accounts) {
+    public TaskGroupContent(WebDriver driver, List<WbAccount> accounts) {
+        this.driver = driver;
         this.accounts = accounts;
     }
 
@@ -54,6 +54,10 @@ public class TaskGroupContent implements Serializable {
 
     public WbAccount nextAccount() {
         return nextAccountIndex < accounts.size() ? accounts.get(nextAccountIndex++) : null;
+    }
+
+    public WbAccount currentAccount() {
+        return accounts.get(nextAccountIndex - 1);
     }
 
     public SearchResult getResult() {
@@ -79,7 +83,7 @@ public class TaskGroupContent implements Serializable {
     public void setNextAccount(boolean nextAccount) {
         this.nextAccount = nextAccount;
         if (nextAccount) {
-            accontCounter = 0;
+            accountCounter = 0;
         }
     }
 
@@ -90,7 +94,7 @@ public class TaskGroupContent implements Serializable {
     public void setNextResult(boolean nextResult) {
         this.nextResult = nextResult;
         if (nextResult) {
-            this.resutlCounter = 0;
+            this.resultCounter = 0;
         }
     }
 
@@ -112,16 +116,8 @@ public class TaskGroupContent implements Serializable {
 
     public void incrCounter() {
         this.totalCnt++;
-        this.accontCounter++;
-        this.resutlCounter++;
-    }
-
-    public int getLimitNum() {
-        return limitNum;
-    }
-
-    public void setLimitNum(int limitNum) {
-        this.limitNum = limitNum;
+        this.accountCounter++;
+        this.resultCounter++;
     }
 
     public int getTotalCnt() {
@@ -136,12 +132,12 @@ public class TaskGroupContent implements Serializable {
         this.msg = msg;
     }
 
-    public int getResutlCounter() {
-        return resutlCounter;
+    public int getResultCounter() {
+        return resultCounter;
     }
 
-    public int getAccontCounter() {
-        return accontCounter;
+    public int getAccountCounter() {
+        return accountCounter;
     }
 
     public int getPage() {
@@ -150,7 +146,7 @@ public class TaskGroupContent implements Serializable {
 
     public void incrPage() {
         this.page++;
-        this.resutlCounter = 0;
+        this.resultCounter = 0;
     }
 
 }
